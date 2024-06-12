@@ -10,6 +10,7 @@ import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 
@@ -21,12 +22,13 @@ import edu.wpi.first.wpilibj.XboxController;
  */
 public class Robot extends TimedRobot {
   private static final String CANBUS_NAME = "rio";
-  private final TalonFX leftLeader = new TalonFX(43, CANBUS_NAME);
+  private final TalonFX kraken = new TalonFX(43, CANBUS_NAME);
 
 
-  private final DutyCycleOut leftOut = new DutyCycleOut(0);
+  private final DutyCycleOut krakenOut = new DutyCycleOut(0);
 
-  private final XboxController joystick = new XboxController(0);
+  private Joystick m_stick;
+  
 
   private int printCount = 0;
 
@@ -37,36 +39,24 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     /* Configure the devices */
-    var leftConfiguration = new TalonFXConfiguration();
+    var krakenConfiguration = new TalonFXConfiguration();
 
+    m_stick = new Joystick(0);
 
     /* User can optionally change the configs or leave it alone to perform a factory default */
-    leftConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    krakenConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
 
-    leftLeader.getConfigurator().apply(leftConfiguration);
+    kraken.getConfigurator().apply(krakenConfiguration);
 
 
   
   
-    leftLeader.setSafetyEnabled(true);
-  
-
-    /* Currently in simulation, we do not support FOC, so disable it while simulating */
-    if (Utils.isSimulation()){
-      leftOut.EnableFOC = false;
-      
-    }
+    kraken.setSafetyEnabled(true);
   }
 
   @Override
-  public void robotPeriodic() {
-    if (++printCount >= 10) {
-      printCount = 0;
-      System.out.println("Left out: " + leftLeader.get());
-      System.out.println("Left Pos: " + leftLeader.getPosition());
-    }
-  }
+  public void robotPeriodic() {}
 
   @Override
   public void autonomousInit() {}
@@ -79,18 +69,8 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    /* Get forward and rotational throttle from joystick */
-    /* invert the joystick Y because forward Y is negative */
-    double fwd = -joystick.getLeftY();
-    double rot = joystick.getRightX();
-    /* Set output to control frames */
-    leftOut.Output = fwd + rot;
-
-    /* And set them to the motors */
-    if (!joystick.getAButton()) {
-      leftLeader.setControl(leftOut);
-
-    }
+    krakenOut.Output = m_stick.getX();
+    kraken.setControl(krakenOut);
   }
 
   @Override
@@ -99,8 +79,8 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledPeriodic() {
     /* Zero out controls so we aren't just relying on the enable frame */
-    leftOut.Output = 0;
-    leftLeader.setControl(leftOut);
+    krakenOut.Output = 0;
+    kraken.setControl(krakenOut);
   }
 
   @Override
