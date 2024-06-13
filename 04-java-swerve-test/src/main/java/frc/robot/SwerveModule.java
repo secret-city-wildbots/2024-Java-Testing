@@ -11,30 +11,33 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.wpilibj.Encoder;
-import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
+
+import com.ctre.phoenix6.hardware.TalonFX;
+
 
 public class SwerveModule {
   private static final double kWheelRadius = 0.0508;
-  private static final int kEncoderResolution = 4096;
 
   private static final double kModuleMaxAngularVelocity = Drivetrain.kMaxAngularSpeed;
   private static final double kModuleMaxAngularAcceleration =
       2 * Math.PI; // radians per second squared
 
-  private final PWMSparkMax m_driveMotor;
-  private final PWMSparkMax m_turningMotor;
+  // private final PWMSparkMax m_driveMotor;
+  // private final PWMSparkMax m_azimuthMotor;
 
-  private final Encoder m_driveEncoder;
-  private final Encoder m_turningEncoder;
+  private final TalonFX m_driveMotor;
+  private final TalonFX m_azimuthMotor;
+
+  private final double m_driveRatio;
+  private final double m_azimuthRatio;
 
   // Gains are for example purposes only - must be determined for your own robot!
-  private final PIDController m_drivePIDController = new PIDController(1, 0, 0);
+  private final PIDController m_drivePIDController = new PIDController(0.01, 0, 0);
 
   // Gains are for example purposes only - must be determined for your own robot!
-  private final ProfiledPIDController m_turningPIDController =
+  private final ProfiledPIDController m_azimuthPIDController =
       new ProfiledPIDController(
-          1,
+          0.01,
           0,
           0,
           new TrapezoidProfile.Constraints(
@@ -42,44 +45,30 @@ public class SwerveModule {
 
   // Gains are for example purposes only - must be determined for your own robot!
   private final SimpleMotorFeedforward m_driveFeedforward = new SimpleMotorFeedforward(1, 3);
-  private final SimpleMotorFeedforward m_turnFeedforward = new SimpleMotorFeedforward(1, 0.5);
+  private final SimpleMotorFeedforward m_azimuthFeedforward = new SimpleMotorFeedforward(1, 0.5);
 
   /**
-   * Constructs a SwerveModule with a drive motor, turning motor, drive encoder and turning encoder.
+   * Constructs a SwerveModule with a drive motor, azimuth motor, drive encoder and azimuth encoder.
    *
-   * @param driveMotorChannel PWM output for the drive motor.
-   * @param turningMotorChannel PWM output for the turning motor.
-   * @param driveEncoderChannelA DIO input for the drive encoder channel A
-   * @param driveEncoderChannelB DIO input for the drive encoder channel B
-   * @param turningEncoderChannelA DIO input for the turning encoder channel A
-   * @param turningEncoderChannelB DIO input for the turning encoder channel B
+   * @param driveMotorID CAN ID for the drive motor
+   * @param azimuthMotorID CAN ID for the azimuth motor
+   * @param driveGearRatio Gear ratio for the drive motor
+   * @param azimuthGearRatio Gear ratio for the azimuth motor
    */
   public SwerveModule(
-      int driveMotorChannel,
-      int turningMotorChannel,
-      int driveEncoderChannelA,
-      int driveEncoderChannelB,
-      int turningEncoderChannelA,
-      int turningEncoderChannelB) {
-    m_driveMotor = new PWMSparkMax(driveMotorChannel);
-    m_turningMotor = new PWMSparkMax(turningMotorChannel);
+      int driveMotorID,
+      int azimuthMotorID,
+      double driveGearRatio,
+      double azimuthGearRatio) {
+    m_driveMotor = new TalonFX(driveMotorID, "canivore");
+    m_azimuthMotor = new TalonFX(azimuthMotorID, "canivore");
 
-    m_driveEncoder = new Encoder(driveEncoderChannelA, driveEncoderChannelB);
-    m_turningEncoder = new Encoder(turningEncoderChannelA, turningEncoderChannelB);
-
-    // Set the distance per pulse for the drive encoder. We can simply use the
-    // distance traveled for one rotation of the wheel divided by the encoder
-    // resolution.
-    m_driveEncoder.setDistancePerPulse(2 * Math.PI * kWheelRadius / kEncoderResolution);
-
-    // Set the distance (in this case, angle) in radians per pulse for the turning encoder.
-    // This is the the angle through an entire rotation (2 * pi) divided by the
-    // encoder resolution.
-    m_turningEncoder.setDistancePerPulse(2 * Math.PI / kEncoderResolution);
+    m_driveRatio = driveGearRatio;
+    m_azimuthRatio = azimuthGearRatio;
 
     // Limit the PID Controller's input range between -pi and pi and set the input
     // to be continuous.
-    m_turningPIDController.enableContinuousInput(-Math.PI, Math.PI);
+    m_azimuthPIDController.enableContinuousInput(-Math.PI, Math.PI);
   }
 
   /**
@@ -89,7 +78,7 @@ public class SwerveModule {
    */
   public SwerveModuleState getState() {
     return new SwerveModuleState(
-        m_driveEncoder.getRate(), new Rotation2d(m_turningEncoder.getDistance()));
+        m_driveMotor.getRotorVelocity().getValueAsDouble()*m_driveRatio*2*Math.PI*kWheelRadius, new Rotation2d(m_azimuthMotor.getRotorPosition().getValueAsDouble()*m_azimuthRatio));
   }
 
   /**
@@ -99,7 +88,7 @@ public class SwerveModule {
    */
   public SwerveModulePosition getPosition() {
     return new SwerveModulePosition(
-        m_driveEncoder.getDistance(), new Rotation2d(m_turningEncoder.getDistance()));
+        m_driveMotor.getRotorPosition().getValueAsDouble()*m_driveRatio*2*Math.PI*kWheelRadius, new Rotation2d(m_azimuthMotor.getRotorPosition().getValueAsDouble()*m_azimuthRatio));
   }
 
   /**
@@ -108,7 +97,7 @@ public class SwerveModule {
    * @param desiredState Desired state with speed and angle.
    */
   public void setDesiredState(SwerveModuleState desiredState) {
-    var encoderRotation = new Rotation2d(m_turningEncoder.getDistance());
+    var encoderRotation = new Rotation2d(m_azimuthMotor.getRotorPosition().getValueAsDouble()*m_azimuthRatio);
 
     // Optimize the reference state to avoid spinning further than 90 degrees
     SwerveModuleState state = SwerveModuleState.optimize(desiredState, encoderRotation);
@@ -120,18 +109,18 @@ public class SwerveModule {
 
     // Calculate the drive output from the drive PID controller.
     final double driveOutput =
-        m_drivePIDController.calculate(m_driveEncoder.getRate(), state.speedMetersPerSecond);
+        m_drivePIDController.calculate(m_driveMotor.getRotorVelocity().getValueAsDouble()*m_driveRatio*2*Math.PI*kWheelRadius, state.speedMetersPerSecond);
 
     final double driveFeedforward = m_driveFeedforward.calculate(state.speedMetersPerSecond);
 
-    // Calculate the turning motor output from the turning PID controller.
-    final double turnOutput =
-        m_turningPIDController.calculate(m_turningEncoder.getDistance(), state.angle.getRadians());
+    // Calculate the azimuth motor output from the azimuth PID controller.
+    final double azimuthOutput =
+        m_azimuthPIDController.calculate(m_azimuthMotor.getRotorPosition().getValueAsDouble()*m_azimuthRatio, state.angle.getRadians());
 
-    final double turnFeedforward =
-        m_turnFeedforward.calculate(m_turningPIDController.getSetpoint().velocity);
+    final double azimuthFeedforward =
+        m_azimuthFeedforward.calculate(m_azimuthPIDController.getSetpoint().velocity);
 
     m_driveMotor.setVoltage(driveOutput + driveFeedforward);
-    m_turningMotor.setVoltage(turnOutput + turnFeedforward);
+    m_azimuthMotor.setVoltage(azimuthOutput + azimuthFeedforward);
   }
 }
