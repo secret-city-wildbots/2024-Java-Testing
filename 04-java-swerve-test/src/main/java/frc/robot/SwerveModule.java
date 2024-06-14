@@ -14,8 +14,27 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 
 import com.ctre.phoenix6.hardware.TalonFX;
 
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class SwerveModule {
+  // Network table communication
+  private NetworkTableInstance inst = NetworkTableInstance.getDefault();
+  private NetworkTable table = inst.getTable("datatable");
+
+  private DoublePublisher swerveModuleCommand = table.getDoubleTopic("swerveModuleCommand").publish();
+  private DoublePublisher swerveModuleKP = table.getDoubleTopic("swerveModuleKP").publish();
+  private DoublePublisher swerveModuleKI = table.getDoubleTopic("swerveModuleKI").publish();
+  private DoublePublisher swerveModuleKD = table.getDoubleTopic("swerveModuleKD").publish();
+  private DoublePublisher swerveModuleError = table.getDoubleTopic("swerveModuleError").publish();
+
+  private DoublePublisher azimuthModuleCommand = table.getDoubleTopic("azimuthModuleCommand").publish();
+  private DoublePublisher azimuthModuleKP = table.getDoubleTopic("azimuthModuleKP").publish();
+  private DoublePublisher azimuthModuleKI = table.getDoubleTopic("azimuthModuleKI").publish();
+  private DoublePublisher azimuthModuleKD = table.getDoubleTopic("azimuthModuleKD").publish();
+  private DoublePublisher azimuthModuleError = table.getDoubleTopic("azimuthModuleError").publish();
+
   private static final double kWheelRadius = 0.0508;
 
   private static final double kModuleMaxAngularVelocity = Drivetrain.kMaxAngularSpeed;
@@ -123,6 +142,18 @@ public class SwerveModule {
     System.out.println(m_driveMotor.getDeviceID());
     System.out.println(m_drivePIDController.getSetpoint());
     System.out.println(m_drivePIDController.getVelocityError());
+
+    swerveModuleCommand.set(m_drivePIDController.getSetpoint());
+    swerveModuleKP.set(m_drivePIDController.getP());
+    swerveModuleKI.set(m_drivePIDController.getI());
+    swerveModuleKD.set(m_drivePIDController.getD());
+    swerveModuleError.set(m_drivePIDController.getVelocityError());
+
+    azimuthModuleCommand.set(m_azimuthPIDController.getSetpoint());
+    azimuthModuleKP.set(m_azimuthPIDController.getP());
+    azimuthModuleKI.set(m_azimuthPIDController.getI());
+    azimuthModuleKD.set(m_azimuthPIDController.getD());
+    azimuthModuleError.set(m_azimuthPIDController.getVelocityError());
 
     m_driveMotor.setVoltage(driveOutput + driveFeedforward);
     m_azimuthMotor.setVoltage(azimuthOutput + azimuthFeedforward);
