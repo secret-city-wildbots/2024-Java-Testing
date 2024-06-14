@@ -32,20 +32,20 @@ public class SwerveModule {
   private final double m_azimuthRatio;
 
   // Gains are for example purposes only - must be determined for your own robot!
-  private final PIDController m_drivePIDController = new PIDController(0.01, 0, 0);
+  private final PIDController m_drivePIDController = new PIDController(0.5, 0, 0);
 
   // Gains are for example purposes only - must be determined for your own robot!
   private final ProfiledPIDController m_azimuthPIDController =
       new ProfiledPIDController(
-          0.01,
+          0.5,
           0,
           0,
           new TrapezoidProfile.Constraints(
               kModuleMaxAngularVelocity, kModuleMaxAngularAcceleration));
 
   // Gains are for example purposes only - must be determined for your own robot!
-  private final SimpleMotorFeedforward m_driveFeedforward = new SimpleMotorFeedforward(1, 3);
-  private final SimpleMotorFeedforward m_azimuthFeedforward = new SimpleMotorFeedforward(1, 0.5);
+  private final SimpleMotorFeedforward m_driveFeedforward = new SimpleMotorFeedforward(0.1, 0.3);
+  private final SimpleMotorFeedforward m_azimuthFeedforward = new SimpleMotorFeedforward(0.1, 0.5);
 
   /**
    * Constructs a SwerveModule with a drive motor, azimuth motor, drive encoder and azimuth encoder.
@@ -120,7 +120,13 @@ public class SwerveModule {
     final double azimuthFeedforward =
         m_azimuthFeedforward.calculate(m_azimuthPIDController.getSetpoint().velocity);
 
+    System.out.println(m_driveMotor.getDeviceID());
+    System.out.println(m_drivePIDController.getSetpoint());
+    System.out.println(m_drivePIDController.getVelocityError());
+
     m_driveMotor.setVoltage(driveOutput + driveFeedforward);
     m_azimuthMotor.setVoltage(azimuthOutput + azimuthFeedforward);
+    // m_driveMotor.setVoltage(driveOutput);
+    // m_azimuthMotor.setVoltage(azimuthOutput);
   }
 }
