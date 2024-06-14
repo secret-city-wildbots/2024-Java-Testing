@@ -51,14 +51,14 @@ public class SwerveModule {
   private final double m_azimuthRatio;
 
   // Gains are for example purposes only - must be determined for your own robot!
-  private final PIDController m_drivePIDController = new PIDController(0.5, 0, 0);
+  private final PIDController m_drivePIDController = new PIDController(4.0, 0.0, 0.0);
 
   // Gains are for example purposes only - must be determined for your own robot!
   private final ProfiledPIDController m_azimuthPIDController =
       new ProfiledPIDController(
-          0.5,
-          0,
-          0,
+          0.1,
+          0.3,
+          0.3,
           new TrapezoidProfile.Constraints(
               kModuleMaxAngularVelocity, kModuleMaxAngularAcceleration));
 
@@ -143,20 +143,23 @@ public class SwerveModule {
     System.out.println(m_drivePIDController.getSetpoint());
     System.out.println(m_drivePIDController.getVelocityError());
 
-    swerveModuleCommand.set(m_drivePIDController.getSetpoint());
-    swerveModuleKP.set(m_drivePIDController.getP());
-    swerveModuleKI.set(m_drivePIDController.getI());
-    swerveModuleKD.set(m_drivePIDController.getD());
-    swerveModuleError.set(m_drivePIDController.getVelocityError());
+    if(m_driveMotor.getDeviceID() == 10)
+    {
+      swerveModuleCommand.set(m_drivePIDController.getSetpoint());
+      swerveModuleKP.set(m_drivePIDController.getP());
+      swerveModuleKI.set(m_drivePIDController.getI());
+      swerveModuleKD.set(m_drivePIDController.getD());
+      swerveModuleError.set(m_drivePIDController.getVelocityError());
 
-    azimuthModuleCommand.set(m_azimuthPIDController.getSetpoint());
-    azimuthModuleKP.set(m_azimuthPIDController.getP());
-    azimuthModuleKI.set(m_azimuthPIDController.getI());
-    azimuthModuleKD.set(m_azimuthPIDController.getD());
-    azimuthModuleError.set(m_azimuthPIDController.getVelocityError());
+      // azimuthModuleCommand.set(m_azimuthPIDController.getSetpoint());
+      azimuthModuleKP.set(m_azimuthPIDController.getP());
+      azimuthModuleKI.set(m_azimuthPIDController.getI());
+      azimuthModuleKD.set(m_azimuthPIDController.getD());
+      azimuthModuleError.set(m_azimuthPIDController.getVelocityError());
+    }
 
     m_driveMotor.setVoltage(driveOutput + driveFeedforward);
-    m_azimuthMotor.setVoltage(azimuthOutput + azimuthFeedforward);
+    m_azimuthMotor.setVoltage(0);
     // m_driveMotor.setVoltage(driveOutput);
     // m_azimuthMotor.setVoltage(azimuthOutput);
   }
