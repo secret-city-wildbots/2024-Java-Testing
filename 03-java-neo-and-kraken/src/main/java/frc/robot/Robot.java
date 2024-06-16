@@ -9,7 +9,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Joystick;
 
-import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkPIDController;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkLowLevel.MotorType;
@@ -26,15 +25,22 @@ import com.ctre.phoenix6.signals.InvertedValue;
  * project.
  */
 public class Robot extends TimedRobot {
+  // SmartDashboard Communication Setup
   private static final String kDefaultAuto = "Default";
   private static final String kCustomAuto = "My Auto";
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
+
+  // Controller Setup
   private Joystick m_stick;
+
+  // Neo Motor Setup
   private static final int deviceID = 2;
   private CANSparkMax m_NEO;
   private SparkPIDController m_pidController;
   public double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput, maxRPM;
+
+  // Kraken Motor Setup
   private static final String CANBUS_NAME = "rio";
   private final TalonFX kraken = new TalonFX(43, CANBUS_NAME);
   private final DutyCycleOut krakensetpoint = new DutyCycleOut(0);
@@ -45,16 +51,17 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
+    // SmartDashboard Communication Initialization
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
 
+    // Xbox Controller Initialization
     m_stick = new Joystick(0);
 
+    // Neo Motor Initialization
     m_NEO = new CANSparkMax(deviceID, MotorType.kBrushless);
-
     m_NEO.restoreFactoryDefaults();
-
     m_pidController = m_NEO.getPIDController();
 
     kP = 6e-5; 
@@ -73,12 +80,10 @@ public class Robot extends TimedRobot {
     m_pidController.setFF(kFF);
     m_pidController.setOutputRange(kMinOutput, kMaxOutput);
 
+    // Kraken Motor Initialization
     var krakenConfiguration = new TalonFXConfiguration();
-
     krakenConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-
     kraken.getConfigurator().apply(krakenConfiguration);
-
     kraken.setSafetyEnabled(true);
   }
 
@@ -130,10 +135,12 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
+    // Neo Controller Input
     double NEOsetPoint = m_stick.getY()*maxRPM;
-    krakensetpoint.Output = m_stick.getX();
     m_pidController.setReference(NEOsetPoint, CANSparkMax.ControlType.kVelocity);
-    
+
+    // Kraken Controller Input
+    krakensetpoint.Output = m_stick.getX();
     kraken.setControl(krakensetpoint);
   }
 
