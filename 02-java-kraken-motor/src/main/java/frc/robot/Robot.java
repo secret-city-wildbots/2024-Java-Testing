@@ -21,10 +21,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 public class Robot extends TimedRobot {
   private static final String CANBUS_NAME = "rio";
   private final TalonFX kraken = new TalonFX(43, CANBUS_NAME);
-
-
   private final DutyCycleOut krakenOut = new DutyCycleOut(0);
-
   private Joystick m_stick;
 
   /**
@@ -40,13 +37,7 @@ public class Robot extends TimedRobot {
 
     /* User can optionally change the configs or leave it alone to perform a factory default */
     krakenConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-
-
     kraken.getConfigurator().apply(krakenConfiguration);
-
-
-  
-  
     kraken.setSafetyEnabled(true);
   }
 
@@ -64,6 +55,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
+    // Get controller joystick value and set it to the motor output
     krakenOut.Output = m_stick.getX();
     kraken.setControl(krakenOut);
   }

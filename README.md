@@ -1,6 +1,12 @@
 # 2024-Java-Testing
 This repository contains examples we have worked through during the Summer of 2024. All examples have been tested and run on Holy Canoli and/or the 2024 competition robot for the Cresendo game.
 
+## Contents
+ - [Initial Setup](#initial-setup) 
+ - [00 - Java Hello World](#00-java-hello-world)
+ - [01 - Java Neo Motor](#01-java-neo-motor) 
+ - [02 - Java Kraken X60 Motor](#02-java-kraken-motor) 
+
 ## Initial Setup
 
 Below are the minimal steps to get up and running with running Java on our FRC Robots and testbeds using our example code.
@@ -294,3 +300,109 @@ Below that setup is where the magic happens for controlling the motor with the x
 1. Make sure `TeleOperated` is selected and then click the `Enable` button
    ![Driver Station](99-doc-images/00-java-frc-driver-station.png)
 1. You should see the RSL (robot signal light) start to blink and now you should be able to control the neo motor with the left joystick on the xbox controller.
+
+## 02-java-kraken-motor
+
+### Description
+
+The goal of the example is to do the following:
+
+1. Be able to connect and deploy to the RoboRIO
+1. Be able to enable the robot
+1. Control a kraken x60 motor with a Xbox Controller
+
+Note: This example is a `Timed Robot` code layout.
+
+### Setup VSCode
+
+To be able to use VSCode with this example, you will need to make sure you open VSCode to the specific folder, below are the steps:
+
+  1. launch the VSCode application
+  1. Go to `File` -> `New Window`
+  1. While your new window is in focus, Go to `File` -> `Open Folder...`
+  1. Select the directory `02-java-kraken-motor`
+  1. Now you should be able to code and utilize all of the features built into the WPILib version of VSCode. Your VSCode should look like something below:
+     ![Example VSCode View](99-doc-images/02-java-kraken-motor-vscode.png)
+
+### Hardware Setup
+
+Below is an image showing the minimum hardware needed to run and work with this example along with the wiring connections:
+![Java Kraken X60 Motor Setup](99-doc-images/02-java-kraken-motor-setup.png)
+
+### Code Overview
+
+As mentioned in the description, we will be deploying the code to the RoboRIO, enabling the RoboRIO, switching to teleop mode, and be able to control the neo motor with the Xbox Controller.
+
+The main code lives in the `src/main/java/frc/robot` directory. There are 2 files:
+  - Main.java
+     - entry point for the program
+  - Robot.java
+    - This contains all of the init and periodic functions for the robot
+       - robot
+       - autonomous
+       - teleop
+       - disabled
+       - test
+       - simulation
+
+you will notice on lines 7 - 10 in `Robot.java` the following import statements:
+
+```java
+  import com.ctre.phoenix6.configs.TalonFXConfiguration;
+  import com.ctre.phoenix6.controls.DutyCycleOut;
+  import com.ctre.phoenix6.hardware.TalonFX;
+  import com.ctre.phoenix6.signals.InvertedValue;
+```
+
+Here we are needing to import some 3rd party libraries. There are some good FIRST Docs describing how to import and manage 3rd party libraries [here](https://docs.wpilib.org/en/stable/docs/software/vscode-overview/3rd-party-libraries.html#rd-party-libraries). Towards the bottom of that page, there is a section called [Vendor Libraries](https://docs.wpilib.org/en/stable/docs/software/vscode-overview/3rd-party-libraries.html#vendor-libraries). There they will have a list of the URLs for the most popular libraries used. Also you should be able find the import instructions on the vendors websites as well.
+
+At the top of the `Robot` class, we instantiate the following variables utilizing the imported libraries (lines 22 - 25):
+
+```java
+  private static final String CANBUS_NAME = "rio"; // Canbus name
+  private final TalonFX kraken = new TalonFX(43, CANBUS_NAME); // Motor
+  private final DutyCycleOut krakenOut = new DutyCycleOut(0); // Motor Output
+  private Joystick m_stick; // Xbox Controller
+```
+
+In the robotInit function we start to initialize the variables and set their default values (lines 33 - 41).
+
+```java
+    /* Configure the devices */
+    var krakenConfiguration = new TalonFXConfiguration();
+
+    m_stick = new Joystick(0);
+
+    /* User can optionally change the configs or leave it alone to perform a factory default */
+    krakenConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    kraken.getConfigurator().apply(krakenConfiguration);
+    kraken.setSafetyEnabled(true);
+```
+
+Now in the `teleopPeriodic` function we will see the use of the setup that occured in the `robotInit` function(lines 58 - 59). We get the X axis value of the left joystick on the xbox controller (this will be a value ranging from -1 to +1) and set that to the control output of the Kraken motor. 
+
+```java
+    // Get controller joystick value and set it to the motor output
+    krakenOut.Output = m_stick.getX();
+    kraken.setControl(krakenOut);
+```
+
+Now in the `disabledPeriodic` function we will make sure the robot is set to a 0 output value (lines 67 - 69)
+
+```java
+    /* Zero out controls so we aren't just relying on the enable frame */
+    krakenOut.Output = 0;
+    kraken.setControl(krakenOut);
+```
+
+### Running Example
+
+1. After connecting everything as indicated in the diagram, power on the system
+1. Connect to the Radio's wifi network
+1. In VSCode, you will hit the `...` on the top right and click `Build Robot Code`. You should see `BUILD SUCCESSFUL` in the terminal of VSCode
+   ![Build Code](99-doc-images/00-java_hello_world_build_code.png)
+1. In VSCode, you will hit the `...` on the top right again and click `Deploy Robot Code`
+1. Now open up the FRC Driver Station
+1. Make sure `TeleOperated` is selected and then click the `Enable` button
+   ![Driver Station](99-doc-images/00-java-frc-driver-station.png)
+1. You should see the RSL (robot signal light) start to blink and now you should be able to control the kraken x60 motor with the left joystick on the xbox controller.
