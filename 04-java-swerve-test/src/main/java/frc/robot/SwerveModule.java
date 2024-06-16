@@ -38,8 +38,7 @@ public class SwerveModule {
   private static final double kWheelRadius = 0.0508;
 
   private static final double kModuleMaxAngularVelocity = Drivetrain.kMaxAngularSpeed;
-  private static final double kModuleMaxAngularAcceleration =
-      2 * Math.PI; // radians per second squared
+  private static final double kModuleMaxAngularAcceleration = 2 * Math.PI; // radians per second squared
 
   // private final PWMSparkMax m_driveMotor;
   // private final PWMSparkMax m_azimuthMotor;
@@ -138,10 +137,6 @@ public class SwerveModule {
 
     final double azimuthFeedforward =
         m_azimuthFeedforward.calculate(m_azimuthPIDController.getSetpoint().velocity);
-
-    System.out.println(m_driveMotor.getDeviceID());
-    System.out.println(m_drivePIDController.getSetpoint());
-    System.out.println(m_drivePIDController.getVelocityError());
 
     if(m_driveMotor.getDeviceID() == 10)
     {

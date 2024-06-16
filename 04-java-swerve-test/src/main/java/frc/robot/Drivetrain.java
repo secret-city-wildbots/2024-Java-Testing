@@ -4,16 +4,29 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
 
 /** Represents a swerve drive style drivetrain. */
 public class Drivetrain {
+  private NetworkTableInstance inst = NetworkTableInstance.getDefault();
+  private NetworkTable table = inst.getTable("datatable");
+  private StructPublisher<Pose3d> myPose = table.getStructTopic("myPose", Pose3d.struct).publish();
+  
   public static final double kMaxSpeed = 6.0; // 3 meters per second
   public static final double kMaxAngularSpeed = Math.PI; // 1/2 rotation per second
 
@@ -86,5 +99,49 @@ public class Drivetrain {
           m_module2.getPosition(),
           m_module3.getPosition()
         });
+  }
+
+  public void advantageScope(XboxController controller) {
+
+    double maxSpeed = 6.0; // m/s
+    double maxRotation = 2 * Math.PI; // rad/s
+
+    double xSpeedInput = -MathUtil.applyDeadband(controller.getLeftY(), 0.08);
+    double ySpeedInput = -MathUtil.applyDeadband(controller.getLeftX(), 0.08);
+    double rotSpeedInput = -MathUtil.applyDeadband(controller.getRawAxis(2), 0.08);
+
+    var swerveModuleStates = m_kinematics.toSwerveModuleStates(new ChassisSpeeds(xSpeedInput * maxSpeed,ySpeedInput * maxSpeed, rotSpeedInput * maxRotation));
+
+    m_module0.setDesiredState(swerveModuleStates[0]);
+    m_module1.setDesiredState(swerveModuleStates[1]);
+    m_module2.setDesiredState(swerveModuleStates[2]);
+    m_module3.setDesiredState(swerveModuleStates[3]);
+
+    double loggingState[] = {
+      swerveModuleStates[1].angle.getDegrees(), // FL Swerve Module Rotation (degrees)
+      swerveModuleStates[1].speedMetersPerSecond, // FL Swerve Drive Speed (m/s)
+      swerveModuleStates[0].angle.getDegrees(), // FR Swerve Module Rotation (degrees)
+      swerveModuleStates[0].speedMetersPerSecond, // FR Swerve Drive Speed (m/s)
+      swerveModuleStates[2].angle.getDegrees(), // BL Swerve Module Rotation (degrees)
+      swerveModuleStates[2].speedMetersPerSecond, // BL Swerve Drive Speed (m/s)
+      swerveModuleStates[3].angle.getDegrees(), // BR Swerve Module Rotation (degrees)
+      swerveModuleStates[3].speedMetersPerSecond, // BR Swerve Drive Speed (m/s)
+    };
+
+    // double loggingState[] = {
+    //   m_module1.getState().angle.getDegrees(), // FL Swerve Module Rotation (degrees)
+    //   m_module1.getState().speedMetersPerSecond, // FL Swerve Drive Speed (m/s)
+    //   m_module0.getState().angle.getDegrees(), // FR Swerve Module Rotation (degrees)
+    //   m_module0.getState().speedMetersPerSecond, // FR Swerve Drive Speed (m/s)
+    //   m_module2.getState().angle.getDegrees(), // BL Swerve Module Rotation (degrees)
+    //   m_module2.getState().speedMetersPerSecond, // BL Swerve Drive Speed (m/s)
+    //   m_module3.getState().angle.getDegrees(), // BR Swerve Module Rotation (degrees)
+    //   m_module3.getState().speedMetersPerSecond, // BR Swerve Drive Speed (m/s)
+    // };
+
+    Pose3d position = new Pose3d(new Translation3d(100,100,0), new Rotation3d(0,0,45));
+
+    myPose.set(position);
+    SmartDashboard.putNumberArray("SwerveModuleStates", loggingState);
   }
 }

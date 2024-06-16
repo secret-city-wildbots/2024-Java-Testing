@@ -14,7 +14,6 @@ import com.revrobotics.SparkPIDController;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 
-import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -35,7 +34,6 @@ public class Robot extends TimedRobot {
   private static final int deviceID = 2;
   private CANSparkMax m_NEO;
   private SparkPIDController m_pidController;
-  private RelativeEncoder m_encoder;
   public double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput, maxRPM;
   private static final String CANBUS_NAME = "rio";
   private final TalonFX kraken = new TalonFX(43, CANBUS_NAME);
@@ -58,8 +56,6 @@ public class Robot extends TimedRobot {
     m_NEO.restoreFactoryDefaults();
 
     m_pidController = m_NEO.getPIDController();
-
-    m_encoder = m_NEO.getEncoder();
 
     kP = 6e-5; 
     kI = 0;

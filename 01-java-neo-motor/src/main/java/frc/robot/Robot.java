@@ -30,6 +30,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
+    // initialize controller / joystick
     m_stick = new Joystick(0);
 
     // initialize motor

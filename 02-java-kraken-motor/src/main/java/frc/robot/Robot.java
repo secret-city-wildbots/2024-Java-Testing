@@ -4,7 +4,6 @@
 
 package frc.robot;
 
-import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -12,7 +11,6 @@ import com.ctre.phoenix6.signals.InvertedValue;
 
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.XboxController;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -28,9 +26,6 @@ public class Robot extends TimedRobot {
   private final DutyCycleOut krakenOut = new DutyCycleOut(0);
 
   private Joystick m_stick;
-  
-
-  private int printCount = 0;
 
   /**
    * This function is run when the robot is first started up and should be used for any
