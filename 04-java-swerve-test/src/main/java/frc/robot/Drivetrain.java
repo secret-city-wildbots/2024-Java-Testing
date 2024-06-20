@@ -23,6 +23,15 @@ import com.ctre.phoenix6.hardware.Pigeon2;
 
 /** Represents a swerve drive style drivetrain. */
 public class Drivetrain {
+  // Simulation position
+  private Pose3d position;
+  private double translation3D_X = 20.0;
+  private double translation3D_Y = 80.0;
+  private double translation3D_Z = 0.0;
+  private double rotation3D_roll = 0.0;
+  private double rotation3D_pitch = 0.0;
+  private double rotation3D_yaw = 0.0;
+
   private NetworkTableInstance inst = NetworkTableInstance.getDefault();
   private NetworkTable table = inst.getTable("datatable");
   private StructPublisher<Pose3d> myPose = table.getStructTopic("myPose", Pose3d.struct).publish();
@@ -72,16 +81,13 @@ public class Drivetrain {
    * @param rot Angular rate of the robot.
    * @param fieldRelative Whether the provided x and y speeds are relative to the field.
    */
-  public void drive(
-      double xSpeed, double ySpeed, double rot, boolean fieldRelative, double periodSeconds) {
-    var swerveModuleStates =
-        m_kinematics.toSwerveModuleStates(
+  public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative, double periodSeconds)
+  {
+    var swerveModuleStates = m_kinematics.toSwerveModuleStates(
             ChassisSpeeds.discretize(
-                fieldRelative
-                    ? ChassisSpeeds.fromFieldRelativeSpeeds(
-                        xSpeed, ySpeed, rot, m_pigeon.getRotation2d())
-                    : new ChassisSpeeds(xSpeed, ySpeed, rot),
-                periodSeconds));
+                fieldRelative ? 
+                ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, m_pigeon.getRotation2d())
+                : new ChassisSpeeds(xSpeed, ySpeed, rot), periodSeconds));
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, kMaxSpeed);
     m_module0.setDesiredState(swerveModuleStates[0]);
     m_module1.setDesiredState(swerveModuleStates[1]);
@@ -139,7 +145,32 @@ public class Drivetrain {
     //   m_module3.getState().speedMetersPerSecond, // BR Swerve Drive Speed (m/s)
     // };
 
-    Pose3d position = new Pose3d(new Translation3d(100,100,0), new Rotation3d(0,0,45));
+    if (controller.getYButtonPressed()) {
+      System.out.println("I am here");
+      System.out.println(translation3D_Y);
+      //move forward 10 inches
+      translation3D_Y += 10.0;
+    }
+    if (controller.getAButtonPressed()) {
+      System.out.println("testing A");
+      //move back 10 inches
+      translation3D_Y -= 10.0;
+    }
+
+    if (controller.getAButtonPressed()) {
+      //move forward 10 inches
+      translation3D_X += 10.0;
+    }
+    if (controller.getBButtonPressed()) {
+      //move forward 10 inches
+      translation3D_X += 10.0;
+    }
+
+
+    position = new Pose3d(
+      new Translation3d(translation3D_X,translation3D_Y,translation3D_Z),
+      new Rotation3d(rotation3D_roll,rotation3D_pitch,rotation3D_yaw)
+    );
 
     myPose.set(position);
     SmartDashboard.putNumberArray("SwerveModuleStates", loggingState);
