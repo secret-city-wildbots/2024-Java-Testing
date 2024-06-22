@@ -32,6 +32,8 @@ public class Robot extends TimedRobot {
   private final TalonFX kraken = new TalonFX(43, CANBUS_NAME);
   // Define krakenOut - This control mode will output a proportion of the supplied voltage which is supplied by the user.
   private final DutyCycleOut krakenOut = new DutyCycleOut(0);
+  // Define enableFOC - This will contorl if the motor will use FOC mode or not
+  private Boolean enableFOC = false;
   // Define the joystick (xbox controller)
   private XboxController m_stick;
 
@@ -80,8 +82,10 @@ public class Robot extends TimedRobot {
     // krakenOut.Output - Proportion of supply voltage to apply in fractional units between -1 and +1
     // Remember the controller Left and Right joysticks (x & y axis) output a range from -1 to +1
     krakenOut.Output = m_stick.getLeftY();
+    // Enable / Disable FOC
+    enableFOC = true;
     // setControl​(DutyCycleOut request) - This control mode will output a proportion of the supplied voltage which is supplied by the user.
-    kraken.setControl(krakenOut);
+    kraken.setControl(krakenOut.withEnableFOC(enableFOC));
 
     // Log infomation to the network table
     /*
