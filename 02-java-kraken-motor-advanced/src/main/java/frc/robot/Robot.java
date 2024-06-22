@@ -107,7 +107,11 @@ public class Robot extends TimedRobot {
      * Kraken x60 (FOC) RPM = 5800
      * Kraken x60 (FOC) RPS = 96.66
      * 
-     * I am expecting to see the graph peak at 96.66 RPS when we give full power to the motor
+     * Kraken x60 (Trapezoidal) RPM = 6000
+     * Kraken x60 (Trapezoidal) RPS = 100
+     * 
+     * I am expecting to see the graph peak at 96.66 RPS when we give full power to the motor for FOC
+     * I am expecting to see the graph peak at 100 RPS when we give full power to the motor for Trapezoidal
      */
 
     krakenRotorVelocity.set(kraken.getVelocity().getValueAsDouble());
