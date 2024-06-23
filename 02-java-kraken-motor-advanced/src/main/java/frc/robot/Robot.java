@@ -37,9 +37,11 @@ public class Robot extends TimedRobot {
   // Define the joystick (xbox controller)
   private XboxController m_stick;
   // Testing distance calculations
-  private double motor_distance;
-  private double current_motor_velocity; // This will be in RPS (rotations per second)
-  private double current_wheel_velocity; // This will be in RPS (rotations per second)
+  private double wheel_distance = 0; // Distance the wheel has travelled in inches
+  private double current_motor_rotations; // This will be in rotations
+  private double previous_motor_rotations = 0; // This will be in rotations
+  private double delta_motor_rotations; // This will be in rotations 
+  private double delta_wheel_rotations; // This will be in rotations
   private final double wheel_radius = 2.5; // Radius in inches
   private final double gear_ratio = 7; // input / output
 
@@ -52,7 +54,8 @@ public class Robot extends TimedRobot {
   private NetworkTable table = inst.getTable("datatable");
   // Define a network table table values to display
   private DoublePublisher krakenRotorVelocity = table.getDoubleTopic("krakenRotorVelocity").publish();
-  private DoublePublisher krakenMotorDistanceTravelled = table.getDoubleTopic("krakenMotorDistanceTravelled").publish();
+  private DoublePublisher krakenRotorRotations = table.getDoubleTopic("krakenRotorRotations").publish();
+  private DoublePublisher wheelDistanceTravelled = table.getDoubleTopic("wheelDistanceTravelled").publish();
 
   /*
    * This function is run when the robot is first started up and should be used for any
@@ -70,6 +73,10 @@ public class Robot extends TimedRobot {
     krakenConfiguration.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     kraken.getConfigurator().apply(krakenConfiguration);
     kraken.setSafetyEnabled(true);
+
+    // Reset motor and wheel position to 0.0
+    kraken.setPosition(0.0);
+    wheel_distance = 0.0;
   }
 
   @Override
@@ -88,7 +95,8 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     // krakenOut.Output - Proportion of supply voltage to apply in fractional units between -1 and +1
     // Remember the controller Left and Right joysticks (x & y axis) output a range from -1 to +1
-    krakenOut.Output = m_stick.getLeftY();
+    // Negate the value to align with physical movements (up is forward and down and backward)
+    krakenOut.Output = -m_stick.getLeftY();
 
     // Enable / Disable FOC
     enableFOC = true;
@@ -96,10 +104,20 @@ public class Robot extends TimedRobot {
     // setControl​(DutyCycleOut request) - This control mode will output a proportion of the supplied voltage which is supplied by the user.
     kraken.setControl(krakenOut.withEnableFOC(enableFOC));
 
-    // Calculate distance based on kraken values
-    current_motor_velocity = kraken.getVelocity().getValueAsDouble(); // RPS (rotations per second)
-    current_wheel_velocity = current_motor_velocity / gear_ratio; // RPS of the wheel based on the gear ratio
-    motor_distance = current_wheel_velocity * 2 * Math.PI * wheel_radius;  // Distance the wheel has travelled in inches
+    /*
+     * Calculate the distance travelled based on the kraken motor values
+     */
+
+    // Get the current motor shaft rotations
+    current_motor_rotations = kraken.getPosition().getValueAsDouble();
+    // Calculate the change in motor shaft rotations. This will be + / - depending on which way the motor is turning
+    delta_motor_rotations = current_motor_rotations - previous_motor_rotations;
+    // Calculate the wheel shaft rotations
+    delta_wheel_rotations = delta_motor_rotations / gear_ratio;
+    // Calculate the distance travelled (inches)
+    wheel_distance = wheel_distance + delta_wheel_rotations * 2 * Math.PI * wheel_radius;
+    // Set previous_motor_rotations to current_motor_rotations for next loop cycle
+    previous_motor_rotations = current_motor_rotations;
 
     // Log infomation to the network table
     /*
@@ -139,7 +157,8 @@ public class Robot extends TimedRobot {
      * 
      * I am expecting the distance to go up and down depending on the direction of the motor.
      */
-    krakenMotorDistanceTravelled.set(motor_distance);
+    wheelDistanceTravelled.set(wheel_distance);
+    krakenRotorRotations.set(kraken.getPosition().getValueAsDouble());
   }
 
   @Override
