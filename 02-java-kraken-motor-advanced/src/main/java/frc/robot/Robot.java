@@ -36,6 +36,12 @@ public class Robot extends TimedRobot {
   private Boolean enableFOC = false;
   // Define the joystick (xbox controller)
   private XboxController m_stick;
+  // Testing distance calculations
+  private double motor_distance;
+  private double current_motor_velocity; // This will be in RPS (rotations per second)
+  private double current_wheel_velocity; // This will be in RPS (rotations per second)
+  private final double wheel_radius = 2.5; // Radius in inches
+  private final double gear_ratio = 7; // input / output
 
   /*
    * Network table variables and constants
@@ -46,6 +52,7 @@ public class Robot extends TimedRobot {
   private NetworkTable table = inst.getTable("datatable");
   // Define a network table table values to display
   private DoublePublisher krakenRotorVelocity = table.getDoubleTopic("krakenRotorVelocity").publish();
+  private DoublePublisher krakenMotorDistanceTravelled = table.getDoubleTopic("krakenMotorDistanceTravelled").publish();
 
   /*
    * This function is run when the robot is first started up and should be used for any
@@ -82,10 +89,17 @@ public class Robot extends TimedRobot {
     // krakenOut.Output - Proportion of supply voltage to apply in fractional units between -1 and +1
     // Remember the controller Left and Right joysticks (x & y axis) output a range from -1 to +1
     krakenOut.Output = m_stick.getLeftY();
+
     // Enable / Disable FOC
     enableFOC = true;
+
     // setControl​(DutyCycleOut request) - This control mode will output a proportion of the supplied voltage which is supplied by the user.
     kraken.setControl(krakenOut.withEnableFOC(enableFOC));
+
+    // Calculate distance based on kraken values
+    current_motor_velocity = kraken.getVelocity().getValueAsDouble(); // RPS (rotations per second)
+    current_wheel_velocity = current_motor_velocity / gear_ratio; // RPS of the wheel based on the gear ratio
+    motor_distance = current_wheel_velocity * 2 * Math.PI * wheel_radius;  // Distance the wheel has travelled in inches
 
     // Log infomation to the network table
     /*
@@ -120,6 +134,12 @@ public class Robot extends TimedRobot {
 
     krakenRotorVelocity.set(kraken.getVelocity().getValueAsDouble());
 
+    /*
+     * Theory
+     * 
+     * I am expecting the distance to go up and down depending on the direction of the motor.
+     */
+    krakenMotorDistanceTravelled.set(motor_distance);
   }
 
   @Override
