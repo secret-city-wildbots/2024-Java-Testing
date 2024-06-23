@@ -36,10 +36,10 @@ public class Robot extends TimedRobot {
   private Boolean enableFOC = false;
   // Define the joystick (xbox controller)
   private XboxController m_stick;
-  // Testing distance calculations
-  private double wheel_distance = 0; // Distance the wheel has travelled in inches
+  // Distance calculation variables needed for 1 wheel with our 2024 robot swerve specs
+  private double wheel_distance; // Distance the wheel has travelled in inches
   private double current_motor_rotations; // This will be in rotations
-  private double previous_motor_rotations = 0; // This will be in rotations
+  private double previous_motor_rotations; // This will be in rotations
   private double delta_motor_rotations; // This will be in rotations 
   private double delta_wheel_rotations; // This will be in rotations
   private final double wheel_radius = 2.5; // Radius in inches
@@ -48,6 +48,7 @@ public class Robot extends TimedRobot {
   /*
    * Network table variables and constants
    */
+
   // Define a network table instance
   private NetworkTableInstance inst = NetworkTableInstance.getDefault();
   // Define a network table table within that instance
@@ -136,8 +137,6 @@ public class Robot extends TimedRobot {
      */
 
     /*
-     * Theory
-     * 
      * Since we have the kraken x60 setup to the default values, I am expecting to see the following:
      * 
      * Kraken x60 (FOC) RPM = 5800
@@ -152,13 +151,28 @@ public class Robot extends TimedRobot {
 
     krakenRotorVelocity.set(kraken.getVelocity().getValueAsDouble());
 
+
     /*
-     * Theory
+     * kraken.getPosition() - Position of the device in mechanism rotations. This can be the position of a
+     * remote sensor and is affected by the RotorToSensorRatio and SensorToMechanismRatio configs, as well as
+     * calls to setPosition.
      * 
+     * Default Settings
+     *   - Minimum Value: -16384.0
+     *   - Maximum Value: 16383.9
+     *   - Default Value: 0
+     *   - Units: rotations
+     * 
+     * Default Rates
+     *   - CAN 2.0: 50.0 Hz
+     *   - CAN FD: 100.0 Hz (TimeSynced with Pro)
+     */
+    krakenRotorRotations.set(kraken.getPosition().getValueAsDouble());
+
+    /* 
      * I am expecting the distance to go up and down depending on the direction of the motor.
      */
     wheelDistanceTravelled.set(wheel_distance);
-    krakenRotorRotations.set(kraken.getPosition().getValueAsDouble());
   }
 
   @Override
