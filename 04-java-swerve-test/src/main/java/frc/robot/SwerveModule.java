@@ -79,8 +79,10 @@ public class SwerveModule {
       double driveGearRatio,
       double azimuthGearRatio) {
     // Initialize Motors
-    m_driveMotor = new TalonFX(driveMotorID, "canivore");
-    m_azimuthMotor = new TalonFX(azimuthMotorID, "canivore");
+    m_driveMotor = new TalonFX(driveMotorID, "rio");
+    m_azimuthMotor = new TalonFX(azimuthMotorID, "rio");
+    // m_driveMotor = new TalonFX(driveMotorID, "canivore");
+    // m_azimuthMotor = new TalonFX(azimuthMotorID, "canivore");
     // Initialize Simulation Motors
     m_driveMotorSim = m_driveMotor.getSimState();
     m_driveMotorSim.setSupplyVoltage(12);
