@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
@@ -35,13 +36,9 @@ public class SwerveModule {
   private DoublePublisher azimuthModuleKD = table.getDoubleTopic("azimuthModuleKD").publish();
   private DoublePublisher azimuthModuleError = table.getDoubleTopic("azimuthModuleError").publish();
 
-  private static final double kWheelRadius = 0.0508;
-
+  private static final double kWheelRadius = 0.0636; // Wheel radius in Meters (2.5 inches)
   private static final double kModuleMaxAngularVelocity = Drivetrain.kMaxAngularSpeed;
   private static final double kModuleMaxAngularAcceleration = 2 * Math.PI; // radians per second squared
-
-  // private final PWMSparkMax m_driveMotor;
-  // private final PWMSparkMax m_azimuthMotor;
 
   private final TalonFX m_driveMotor;
   private final TalonFX m_azimuthMotor;
@@ -95,8 +92,33 @@ public class SwerveModule {
    * @return The current state of the module.
    */
   public SwerveModuleState getState() {
+    /* SwerveModuleState
+     * expects the following:
+     * Double speedMetersPerSecond - The speed of the wheel of the module.
+     * Rotation2d angle - The angle of the module.
+     */
+
+    /* Calculating speedMetersPerSecond
+     * gerRotorVelocity - returns RPS (rotations per second)
+     * m_driveRatio - is the gear ratio for the drive motor should be 7:1, because of this I think we need to divide instead of multiply
+     * kWheelRadius - radius of the wheel in meters
+     * 1. Convert motor shaft rps to output shaft (wheel) rps = m_driveMotor.getRotorVelocity().getValueAsDouble() / m_driveRatio
+     * 2. Calculate wheel distance per rotation = 2 * Math.PI * kWheelRadius
+     * 3. multiply results from step 1 and step 2
+     */
+
+     /* Calculating angle
+     * Rotation2d is expecting a value of radians (I am assuming from the wheels perspective).
+     * To achieve this, we would need the following:
+     * getRotorPosition - returns the Position of the motor rotor. (rotations).
+     * m_azimuthRatio - is the gear ratio for the azimuth motor should be 20:1, because of this I think we need to divide instead of multiply
+     * 1. Convert motor shaft angle to output shaft (wheel) angle = m_azimuthMotor.getRotorPosition().getValueAsDouble() / m_azimuthRatio
+     * 2. Convert this value to radians (multiply result from step 1 by 2 * PI)
+     */
     return new SwerveModuleState(
-        m_driveMotor.getRotorVelocity().getValueAsDouble()*m_driveRatio*2*Math.PI*kWheelRadius, new Rotation2d(m_azimuthMotor.getRotorPosition().getValueAsDouble()*m_azimuthRatio));
+      (m_driveMotor.getRotorVelocity().getValueAsDouble() / m_driveRatio) * (2 * Math.PI * kWheelRadius),
+      new Rotation2d((m_azimuthMotor.getRotorPosition().getValueAsDouble() / m_azimuthRatio) * 2 * Math.PI)
+    );
   }
 
   /**
@@ -105,8 +127,33 @@ public class SwerveModule {
    * @return The current position of the module.
    */
   public SwerveModulePosition getPosition() {
+    /* SwerveModulePosition
+     * expects the following:
+     * Double distanceMeters - The distance measured by the wheel of the module.
+     * Rotation2d angle - The angle of the module.
+     */
+
+     /* Calculating distanceMeters
+     * getRotorPosition - returns rotations of rotor
+     * m_driveRatio - is the gear ratio for the drive motor should be 7:1, because of this I think we need to divide instead of multiply
+     * kWheelRadius - radius of the wheel in meters
+     * 1. Convert motor shaft rotations to output shaft (wheel) rotations = m_driveMotor.getRotorPosition().getValueAsDouble() / m_driveRatio
+     * 2. Calculate wheel distance per rotation = 2 * Math.PI * kWheelRadius
+     * 3. multiply results from step 1 and step 2
+     */
+
+     /* Calculating angle
+     * Rotation2d is expecting a value of radians (I am assuming from the wheels perspective).
+     * To achieve this, we would need the following:
+     * getRotorPosition - returns the Position of the motor rotor. (rotations).
+     * m_azimuthRatio - is the gear ratio for the azimuth motor should be 20:1, because of this I think we need to divide instead of multiply
+     * 1. Convert motor shaft angle to output shaft (wheel) angle = m_azimuthMotor.getRotorPosition().getValueAsDouble() / m_azimuthRatio
+     * 2. Convert this value to radians (multiply result from step 1 by 2 * PI)
+     */
     return new SwerveModulePosition(
-        m_driveMotor.getRotorPosition().getValueAsDouble()*m_driveRatio*2*Math.PI*kWheelRadius, new Rotation2d(m_azimuthMotor.getRotorPosition().getValueAsDouble()*m_azimuthRatio));
+      (m_driveMotor.getRotorPosition().getValueAsDouble() / m_driveRatio) * (2 * Math.PI * kWheelRadius),
+      new Rotation2d((m_azimuthMotor.getRotorPosition().getValueAsDouble() / m_azimuthRatio) * 2 * Math.PI)
+    );
   }
 
   /**
@@ -115,9 +162,10 @@ public class SwerveModule {
    * @param desiredState Desired state with speed and angle.
    */
   public void setDesiredState(SwerveModuleState desiredState) {
-    var encoderRotation = new Rotation2d(m_azimuthMotor.getRotorPosition().getValueAsDouble()*m_azimuthRatio);
+    // Get the encoder rotation in radians
+    var encoderRotation = new Rotation2d((m_azimuthMotor.getRotorPosition().getValueAsDouble() / m_azimuthRatio) * 2 * Math.PI);
 
-    // Optimize the reference state to avoid spinning further than 90 degrees
+    // Optimize the reference state to avoid spinning further than PI radians (90 degrees)
     SwerveModuleState state = SwerveModuleState.optimize(desiredState, encoderRotation);
 
     // Scale speed by cosine of angle error. This scales down movement perpendicular to the desired
@@ -126,36 +174,34 @@ public class SwerveModule {
     state.speedMetersPerSecond *= state.angle.minus(encoderRotation).getCos();
 
     // Calculate the drive output from the drive PID controller.
-    final double driveOutput =
-        m_drivePIDController.calculate(m_driveMotor.getRotorVelocity().getValueAsDouble()*m_driveRatio*2*Math.PI*kWheelRadius, state.speedMetersPerSecond);
+    // Clamp the output to be between -1 and +1
+    final double driveOutput = MathUtil.clamp(
+      m_drivePIDController.calculate(
+        (m_driveMotor.getRotorVelocity().getValueAsDouble() / m_driveRatio) * (2 * Math.PI * kWheelRadius),
+        state.speedMetersPerSecond
+      ),
+      -1.0, 
+      1.0
+    );
 
+    // Do we need to make the clamp above -0.6 to +0.6 based on the ks and kv values set for SimpleMotorFeedForward?
     final double driveFeedforward = m_driveFeedforward.calculate(state.speedMetersPerSecond);
 
     // Calculate the azimuth motor output from the azimuth PID controller.
-    final double azimuthOutput =
-        m_azimuthPIDController.calculate(m_azimuthMotor.getRotorPosition().getValueAsDouble()*m_azimuthRatio, state.angle.getRadians());
+    final double azimuthOutput = MathUtil.clamp(
+      m_azimuthPIDController.calculate(
+        (m_azimuthMotor.getRotorPosition().getValueAsDouble() / m_azimuthRatio) * 2 * Math.PI,
+        state.angle.getRadians()
+      ),
+      -1.0,
+      1.0
+    );
 
-    final double azimuthFeedforward =
-        m_azimuthFeedforward.calculate(m_azimuthPIDController.getSetpoint().velocity);
+    final double azimuthFeedforward = m_azimuthFeedforward.calculate(m_azimuthPIDController.getSetpoint().velocity);
 
-    if(m_driveMotor.getDeviceID() == 10)
-    {
-      swerveModuleCommand.set(m_drivePIDController.getSetpoint());
-      swerveModuleKP.set(m_drivePIDController.getP());
-      swerveModuleKI.set(m_drivePIDController.getI());
-      swerveModuleKD.set(m_drivePIDController.getD());
-      swerveModuleError.set(m_drivePIDController.getVelocityError());
-
-      // azimuthModuleCommand.set(m_azimuthPIDController.getSetpoint());
-      azimuthModuleKP.set(m_azimuthPIDController.getP());
-      azimuthModuleKI.set(m_azimuthPIDController.getI());
-      azimuthModuleKD.set(m_azimuthPIDController.getD());
-      azimuthModuleError.set(m_azimuthPIDController.getVelocityError());
-    }
-
-    m_driveMotor.setVoltage(driveOutput + driveFeedforward);
-    m_azimuthMotor.setVoltage(0);
-    // m_driveMotor.setVoltage(driveOutput);
-    // m_azimuthMotor.setVoltage(azimuthOutput);
+    // For testing purposes we are only going to test the drive motors first
+    m_driveMotor.set(driveOutput + driveFeedforward);
+    m_driveMotor.set(azimuthOutput + azimuthFeedforward);
+    // m_azimuthMotor.set(0.0);
   }
 }

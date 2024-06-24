@@ -36,7 +36,7 @@ public class Drivetrain {
   private NetworkTable table = inst.getTable("datatable");
   private StructPublisher<Pose3d> myPose = table.getStructTopic("myPose", Pose3d.struct).publish();
   
-  public static final double kMaxSpeed = 6.0; // 3 meters per second
+  public static final double kMaxSpeed = 5.8; // meters per second
   public static final double kMaxAngularSpeed = Math.PI; // 1/2 rotation per second
 
   private final Translation2d m_module0Location = new Translation2d(0.254, -0.311);
@@ -54,20 +54,18 @@ public class Drivetrain {
 
   private final Pigeon2 m_pigeon = new Pigeon2(6, "canivore");
 
-  private final SwerveDriveKinematics m_kinematics =
-      new SwerveDriveKinematics(
-          m_module0Location, m_module1Location, m_module2Location, m_module3Location);
+  private final SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(m_module0Location, m_module1Location, m_module2Location, m_module3Location);
 
   private final SwerveDriveOdometry m_odometry =
       new SwerveDriveOdometry(
-          m_kinematics,
-          m_pigeon.getRotation2d(),
-          new SwerveModulePosition[] {
-            m_module0.getPosition(),
-            m_module1.getPosition(),
-            m_module2.getPosition(),
-            m_module3.getPosition()
-          });
+        m_kinematics,m_pigeon.getRotation2d(),
+        new SwerveModulePosition[] {
+          m_module0.getPosition(),
+          m_module1.getPosition(),
+          m_module2.getPosition(),
+          m_module3.getPosition()
+        }
+      );
 
   public Drivetrain() {
     m_pigeon.reset();
@@ -84,15 +82,32 @@ public class Drivetrain {
   public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative, double periodSeconds)
   {
     var swerveModuleStates = m_kinematics.toSwerveModuleStates(
-            ChassisSpeeds.discretize(
-                fieldRelative ? 
-                ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, m_pigeon.getRotation2d())
-                : new ChassisSpeeds(xSpeed, ySpeed, rot), periodSeconds));
+      ChassisSpeeds.discretize(
+        fieldRelative ? 
+        ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, m_pigeon.getRotation2d())
+        : new ChassisSpeeds(xSpeed, ySpeed, rot), periodSeconds
+      )
+    );
+
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, kMaxSpeed);
     m_module0.setDesiredState(swerveModuleStates[0]);
     m_module1.setDesiredState(swerveModuleStates[1]);
     m_module2.setDesiredState(swerveModuleStates[2]);
     m_module3.setDesiredState(swerveModuleStates[3]);
+
+    // Log states so advantage scope can see the values
+    double loggingState[] = {
+      swerveModuleStates[1].angle.getDegrees(), // FL Swerve Module Rotation (degrees)
+      swerveModuleStates[1].speedMetersPerSecond, // FL Swerve Drive Speed (m/s)
+      swerveModuleStates[0].angle.getDegrees(), // FR Swerve Module Rotation (degrees)
+      swerveModuleStates[0].speedMetersPerSecond, // FR Swerve Drive Speed (m/s)
+      swerveModuleStates[2].angle.getDegrees(), // BL Swerve Module Rotation (degrees)
+      swerveModuleStates[2].speedMetersPerSecond, // BL Swerve Drive Speed (m/s)
+      swerveModuleStates[3].angle.getDegrees(), // BR Swerve Module Rotation (degrees)
+      swerveModuleStates[3].speedMetersPerSecond, // BR Swerve Drive Speed (m/s)
+    };
+
+    SmartDashboard.putNumberArray("SwerveModuleStates", loggingState);
   }
 
   /** Updates the field relative position of the robot. */
