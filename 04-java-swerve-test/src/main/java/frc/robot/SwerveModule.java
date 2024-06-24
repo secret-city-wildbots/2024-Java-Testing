@@ -14,6 +14,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.sim.TalonFXSimState;
 
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
@@ -42,6 +43,8 @@ public class SwerveModule {
 
   private final TalonFX m_driveMotor;
   private final TalonFX m_azimuthMotor;
+  private final TalonFXSimState m_driveMotorSim;
+  private final TalonFXSimState m_azimuthMotorSim;
 
   private final double m_driveRatio;
   private final double m_azimuthRatio;
@@ -75,8 +78,15 @@ public class SwerveModule {
       int azimuthMotorID,
       double driveGearRatio,
       double azimuthGearRatio) {
+    // Initialize Motors
     m_driveMotor = new TalonFX(driveMotorID, "canivore");
     m_azimuthMotor = new TalonFX(azimuthMotorID, "canivore");
+    // Initialize Simulation Motors
+    m_driveMotorSim = m_driveMotor.getSimState();
+    m_driveMotorSim.setSupplyVoltage(12);
+    m_azimuthMotorSim = m_azimuthMotor.getSimState();
+    m_azimuthMotorSim.setSupplyVoltage(12);
+
 
     m_driveRatio = driveGearRatio;
     m_azimuthRatio = azimuthGearRatio;
