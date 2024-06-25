@@ -25,17 +25,16 @@ public class SwerveModule {
   private NetworkTableInstance inst = NetworkTableInstance.getDefault();
   private NetworkTable table = inst.getTable("datatable");
 
-  private DoublePublisher swerveModuleCommand = table.getDoubleTopic("swerveModuleCommand").publish();
-  private DoublePublisher swerveModuleKP = table.getDoubleTopic("swerveModuleKP").publish();
-  private DoublePublisher swerveModuleKI = table.getDoubleTopic("swerveModuleKI").publish();
-  private DoublePublisher swerveModuleKD = table.getDoubleTopic("swerveModuleKD").publish();
-  private DoublePublisher swerveModuleError = table.getDoubleTopic("swerveModuleError").publish();
+  private DoublePublisher driveOutputNT = table.getDoubleTopic("driveOutput").publish();
+  private DoublePublisher driveFeedForwardNT = table.getDoubleTopic("driveFeedForward").publish();
+  private DoublePublisher driveDesiredStateSpeed = table.getDoubleTopic("driveDesiredStateSpeed").publish();
+  private DoublePublisher driveCurrentStateSpeed = table.getDoubleTopic("driveCurrentStateSpeed").publish();
 
-  private DoublePublisher azimuthModuleCommand = table.getDoubleTopic("azimuthModuleCommand").publish();
-  private DoublePublisher azimuthModuleKP = table.getDoubleTopic("azimuthModuleKP").publish();
-  private DoublePublisher azimuthModuleKI = table.getDoubleTopic("azimuthModuleKI").publish();
-  private DoublePublisher azimuthModuleKD = table.getDoubleTopic("azimuthModuleKD").publish();
-  private DoublePublisher azimuthModuleError = table.getDoubleTopic("azimuthModuleError").publish();
+  private DoublePublisher drivePIDSetpointNT = table.getDoubleTopic("PID Setpoint").publish();
+  private DoublePublisher drivePIDVelocityErrNT = table.getDoubleTopic("PID Velocity Err").publish();
+  private DoublePublisher drivePIDPositionErrNT = table.getDoubleTopic("PID Position Err").publish();
+
+
 
   private static final double kWheelRadius = 0.0636; // Wheel radius in Meters (2.5 inches)
   private static final double kModuleMaxAngularVelocity = Drivetrain.kMaxAngularSpeed;
@@ -50,7 +49,7 @@ public class SwerveModule {
   private final double m_azimuthRatio;
 
   // Gains are for example purposes only - must be determined for your own robot!
-  private final PIDController m_drivePIDController = new PIDController(4.0, 0.0, 0.0);
+  private final PIDController m_drivePIDController = new PIDController(0.07386364, 0.4166666, 0.0);
 
   // Gains are for example purposes only - must be determined for your own robot!
   private final ProfiledPIDController m_azimuthPIDController =
@@ -80,7 +79,7 @@ public class SwerveModule {
       double azimuthGearRatio) {
     // Initialize Motors
     m_driveMotor = new TalonFX(driveMotorID, "rio");
-    m_azimuthMotor = new TalonFX(azimuthMotorID, "rio");
+    m_azimuthMotor = new TalonFX(azimuthMotorID, "canivore");
     // m_driveMotor = new TalonFX(driveMotorID, "canivore");
     // m_azimuthMotor = new TalonFX(azimuthMotorID, "canivore");
     // Initialize Simulation Motors
@@ -187,6 +186,7 @@ public class SwerveModule {
 
     // Calculate the drive output from the drive PID controller.
     // Clamp the output to be between -1 and +1
+    // final double driveOutput = state.speedMetersPerSecond / 5.8;
     final double driveOutput = MathUtil.clamp(
       m_drivePIDController.calculate(
         (m_driveMotor.getRotorVelocity().getValueAsDouble() / m_driveRatio) * (2 * Math.PI * kWheelRadius),
@@ -212,8 +212,21 @@ public class SwerveModule {
     final double azimuthFeedforward = m_azimuthFeedforward.calculate(m_azimuthPIDController.getSetpoint().velocity);
 
     // For testing purposes we are only going to test the drive motors first
-    m_driveMotor.set(driveOutput + driveFeedforward);
-    m_driveMotor.set(azimuthOutput + azimuthFeedforward);
+    if (m_driveMotor.getDeviceID() == 43) {
+      driveOutputNT.set(driveOutput);
+      driveFeedForwardNT.set(0);
+      driveDesiredStateSpeed.set(state.speedMetersPerSecond);
+      driveCurrentStateSpeed.set(getState().speedMetersPerSecond);               
+      drivePIDSetpointNT.set(m_drivePIDController.getSetpoint());
+      drivePIDVelocityErrNT.set(m_drivePIDController.getVelocityError());
+      drivePIDPositionErrNT.set(m_drivePIDController.getPositionError());
+      // m_drivePIDController.getP();
+      // m_drivePIDController.getI();
+      // m_drivePIDController.getD();
+      m_driveMotor.set(driveOutput + driveFeedforward);
+    };
+    
+    //  
     // m_azimuthMotor.set(0.0);
   }
 }
