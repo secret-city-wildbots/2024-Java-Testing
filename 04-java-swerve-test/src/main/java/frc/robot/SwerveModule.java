@@ -14,7 +14,6 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.sim.TalonFXSimState;
 
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
@@ -25,30 +24,29 @@ public class SwerveModule {
   private NetworkTableInstance inst = NetworkTableInstance.getDefault();
   private NetworkTable table = inst.getTable("datatable");
 
+  // SwerveModule Drive Values for Network Table
   private DoublePublisher driveOutputNT = table.getDoubleTopic("driveOutput").publish();
   private DoublePublisher driveFeedForwardNT = table.getDoubleTopic("driveFeedForward").publish();
   private DoublePublisher driveDesiredStateSpeed = table.getDoubleTopic("driveDesiredStateSpeed").publish();
   private DoublePublisher driveCurrentStateSpeed = table.getDoubleTopic("driveCurrentStateSpeed").publish();
 
+  // SwerveModule Drive PID Values for Network Table
   private DoublePublisher drivePIDSetpointNT = table.getDoubleTopic("PID Setpoint").publish();
   private DoublePublisher drivePIDVelocityErrNT = table.getDoubleTopic("PID Velocity Err").publish();
   private DoublePublisher drivePIDPositionErrNT = table.getDoubleTopic("PID Position Err").publish();
 
-
-
+  // Constants for Swerve Module Characteristics
   private static final double kWheelRadius = 0.0636; // Wheel radius in Meters (2.5 inches)
   private static final double kModuleMaxAngularVelocity = Drivetrain.kMaxAngularSpeed;
   private static final double kModuleMaxAngularAcceleration = 2 * Math.PI; // radians per second squared
-
-  private final TalonFX m_driveMotor;
-  private final TalonFX m_azimuthMotor;
-  private final TalonFXSimState m_driveMotorSim;
-  private final TalonFXSimState m_azimuthMotorSim;
-
   private final double m_driveRatio;
   private final double m_azimuthRatio;
 
-  // Gains are for example purposes only - must be determined for your own robot!
+  // Swerve Module Motor Definitions
+  private final TalonFX m_driveMotor;
+  private final TalonFX m_azimuthMotor;
+
+  // Gains tuned using ZN method (tuned on holicanoli without a load)
   private final PIDController m_drivePIDController = new PIDController(0.07386364, 0.4166666, 0.0);
 
   // Gains are for example purposes only - must be determined for your own robot!
@@ -78,16 +76,11 @@ public class SwerveModule {
       double driveGearRatio,
       double azimuthGearRatio) {
     // Initialize Motors
+    // NOTE: These are just setup for Holicanoli. Uncomment lines 83 and 84 when testing with the real robot
     m_driveMotor = new TalonFX(driveMotorID, "rio");
     m_azimuthMotor = new TalonFX(azimuthMotorID, "canivore");
     // m_driveMotor = new TalonFX(driveMotorID, "canivore");
     // m_azimuthMotor = new TalonFX(azimuthMotorID, "canivore");
-    // Initialize Simulation Motors
-    m_driveMotorSim = m_driveMotor.getSimState();
-    m_driveMotorSim.setSupplyVoltage(12);
-    m_azimuthMotorSim = m_azimuthMotor.getSimState();
-    m_azimuthMotorSim.setSupplyVoltage(12);
-
 
     m_driveRatio = driveGearRatio;
     m_azimuthRatio = azimuthGearRatio;
@@ -211,22 +204,22 @@ public class SwerveModule {
 
     final double azimuthFeedforward = m_azimuthFeedforward.calculate(m_azimuthPIDController.getSetpoint().velocity);
 
-    // For testing purposes we are only going to test the drive motors first
+    // For testing purposes we are only going to test the Holicanoli drive motors first
     if (m_driveMotor.getDeviceID() == 43) {
+      // Output values to the network table to trend
       driveOutputNT.set(driveOutput);
-      driveFeedForwardNT.set(0);
+      driveFeedForwardNT.set(driveFeedforward);
       driveDesiredStateSpeed.set(state.speedMetersPerSecond);
       driveCurrentStateSpeed.set(getState().speedMetersPerSecond);               
       drivePIDSetpointNT.set(m_drivePIDController.getSetpoint());
       drivePIDVelocityErrNT.set(m_drivePIDController.getVelocityError());
       drivePIDPositionErrNT.set(m_drivePIDController.getPositionError());
-      // m_drivePIDController.getP();
-      // m_drivePIDController.getI();
-      // m_drivePIDController.getD();
+      // Take PID calculated commands for the motor and send it
       m_driveMotor.set(driveOutput + driveFeedforward);
     };
     
-    //  
-    // m_azimuthMotor.set(0.0);
+    // NOTE: Uncomment below code for testing on the real robot
+    // m_driveMotor.set(driveOutput + driveFeedforward);
+    // m_azimuthMotor.set(azimuthOutput + azimuthFeedforward);
   }
 }

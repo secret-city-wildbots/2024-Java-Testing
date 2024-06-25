@@ -31,6 +31,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void testPeriodic() {
+    // NOTE: Testing logging and seeing values on advantageScope
     m_swerve.advantageScope(m_controller);
   }
 
