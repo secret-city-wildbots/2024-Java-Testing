@@ -48,8 +48,8 @@ public class Drivetrain {
   public static final double azimuthGearRatio = 20;
 
   // NOTE: setup to be used with Holicanoli uncomment line 52 to use with the real robot.
-  private final SwerveModule m_module0 = new SwerveModule(43, 20, driveGearRatio, azimuthGearRatio);
-  // private final SwerveModule m_module0 = new SwerveModule(10, 20, driveGearRatio, azimuthGearRatio);
+  // private final SwerveModule m_module0 = new SwerveModule(10, 43, driveGearRatio, azimuthGearRatio);
+  private final SwerveModule m_module0 = new SwerveModule(10, 20, driveGearRatio, azimuthGearRatio);
   private final SwerveModule m_module1 = new SwerveModule(11, 21, driveGearRatio, azimuthGearRatio);
   private final SwerveModule m_module2 = new SwerveModule(12, 22, driveGearRatio, azimuthGearRatio);
   private final SwerveModule m_module3 = new SwerveModule(13, 23, driveGearRatio, azimuthGearRatio);
@@ -153,27 +153,27 @@ public class Drivetrain {
     m_module2.setDesiredState(swerveModuleStates[2]);
     m_module3.setDesiredState(swerveModuleStates[3]);
 
-    double loggingState[] = {
-      swerveModuleStates[1].angle.getDegrees(), // FL Swerve Module Rotation (degrees)
-      swerveModuleStates[1].speedMetersPerSecond, // FL Swerve Drive Speed (m/s)
-      swerveModuleStates[0].angle.getDegrees(), // FR Swerve Module Rotation (degrees)
-      swerveModuleStates[0].speedMetersPerSecond, // FR Swerve Drive Speed (m/s)
-      swerveModuleStates[2].angle.getDegrees(), // BL Swerve Module Rotation (degrees)
-      swerveModuleStates[2].speedMetersPerSecond, // BL Swerve Drive Speed (m/s)
-      swerveModuleStates[3].angle.getDegrees(), // BR Swerve Module Rotation (degrees)
-      swerveModuleStates[3].speedMetersPerSecond, // BR Swerve Drive Speed (m/s)
-    };
-
     // double loggingState[] = {
-    //   m_module1.getState().angle.getDegrees(), // FL Swerve Module Rotation (degrees)
-    //   m_module1.getState().speedMetersPerSecond, // FL Swerve Drive Speed (m/s)
-    //   m_module0.getState().angle.getDegrees(), // FR Swerve Module Rotation (degrees)
-    //   m_module0.getState().speedMetersPerSecond, // FR Swerve Drive Speed (m/s)
-    //   m_module2.getState().angle.getDegrees(), // BL Swerve Module Rotation (degrees)
-    //   m_module2.getState().speedMetersPerSecond, // BL Swerve Drive Speed (m/s)
-    //   m_module3.getState().angle.getDegrees(), // BR Swerve Module Rotation (degrees)
-    //   m_module3.getState().speedMetersPerSecond, // BR Swerve Drive Speed (m/s)
+    //   swerveModuleStates[1].angle.getDegrees(), // FL Swerve Module Rotation (degrees)
+    //   swerveModuleStates[1].speedMetersPerSecond, // FL Swerve Drive Speed (m/s)
+    //   swerveModuleStates[0].angle.getDegrees(), // FR Swerve Module Rotation (degrees)
+    //   swerveModuleStates[0].speedMetersPerSecond, // FR Swerve Drive Speed (m/s)
+    //   swerveModuleStates[2].angle.getDegrees(), // BL Swerve Module Rotation (degrees)
+    //   swerveModuleStates[2].speedMetersPerSecond, // BL Swerve Drive Speed (m/s)
+    //   swerveModuleStates[3].angle.getDegrees(), // BR Swerve Module Rotation (degrees)
+    //   swerveModuleStates[3].speedMetersPerSecond, // BR Swerve Drive Speed (m/s)
     // };
+
+    double loggingState[] = {
+      m_module1.getState().angle.getDegrees(), // FL Swerve Module Rotation (degrees)
+      m_module1.getState().speedMetersPerSecond, // FL Swerve Drive Speed (m/s)
+      m_module0.getState().angle.getDegrees(), // FR Swerve Module Rotation (degrees)
+      m_module0.getState().speedMetersPerSecond, // FR Swerve Drive Speed (m/s)
+      m_module2.getState().angle.getDegrees(), // BL Swerve Module Rotation (degrees)
+      m_module2.getState().speedMetersPerSecond, // BL Swerve Drive Speed (m/s)
+      m_module3.getState().angle.getDegrees(), // BR Swerve Module Rotation (degrees)
+      m_module3.getState().speedMetersPerSecond, // BR Swerve Drive Speed (m/s)
+    };
 
     if (controller.getYButtonPressed()) {
       System.out.println("I am here");

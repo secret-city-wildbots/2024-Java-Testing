@@ -30,6 +30,12 @@ public class SwerveModule {
   private DoublePublisher driveDesiredStateSpeed = table.getDoubleTopic("driveDesiredStateSpeed").publish();
   private DoublePublisher driveCurrentStateSpeed = table.getDoubleTopic("driveCurrentStateSpeed").publish();
 
+  // SwerveModule Azimuth Values for Network Table
+  private DoublePublisher azimuthOutputNT = table.getDoubleTopic("azimuthOutputNT").publish();
+  private DoublePublisher azimuthFeedForwardNT = table.getDoubleTopic("azimuthFeedForwardNT").publish();
+  private DoublePublisher azimuthDesiredStateAngle = table.getDoubleTopic("azimuthDesiredStateAngle").publish();
+  private DoublePublisher azimuthCurrentStateAngle = table.getDoubleTopic("azimuthCurrentStateAngle").publish();
+
   // SwerveModule Drive PID Values for Network Table
   private DoublePublisher drivePIDSetpointNT = table.getDoubleTopic("PID Setpoint").publish();
   private DoublePublisher drivePIDVelocityErrNT = table.getDoubleTopic("PID Velocity Err").publish();
@@ -53,8 +59,8 @@ public class SwerveModule {
   private final ProfiledPIDController m_azimuthPIDController =
       new ProfiledPIDController(
           0.1,
-          0.3,
-          0.3,
+          0.0,
+          0.0,
           new TrapezoidProfile.Constraints(
               kModuleMaxAngularVelocity, kModuleMaxAngularAcceleration));
 
@@ -76,11 +82,11 @@ public class SwerveModule {
       double driveGearRatio,
       double azimuthGearRatio) {
     // Initialize Motors
-    // NOTE: These are just setup for Holicanoli. Uncomment lines 83 and 84 when testing with the real robot
-    m_driveMotor = new TalonFX(driveMotorID, "rio");
-    m_azimuthMotor = new TalonFX(azimuthMotorID, "canivore");
+    // NOTE: These are just setup for Holicanoli. Uncomment lines 82 and 83 when testing with the real robot
     // m_driveMotor = new TalonFX(driveMotorID, "canivore");
-    // m_azimuthMotor = new TalonFX(azimuthMotorID, "canivore");
+    // m_azimuthMotor = new TalonFX(azimuthMotorID, "rio");
+    m_driveMotor = new TalonFX(driveMotorID, "canivore");
+    m_azimuthMotor = new TalonFX(azimuthMotorID, "canivore");
 
     m_driveRatio = driveGearRatio;
     m_azimuthRatio = azimuthGearRatio;
@@ -88,6 +94,7 @@ public class SwerveModule {
     // Limit the PID Controller's input range between -pi and pi and set the input
     // to be continuous.
     m_azimuthPIDController.enableContinuousInput(-Math.PI, Math.PI);
+    m_azimuthMotor.setPosition(0.0);
   }
 
   /**
@@ -205,21 +212,29 @@ public class SwerveModule {
     final double azimuthFeedforward = m_azimuthFeedforward.calculate(m_azimuthPIDController.getSetpoint().velocity);
 
     // For testing purposes we are only going to test the Holicanoli drive motors first
-    if (m_driveMotor.getDeviceID() == 43) {
-      // Output values to the network table to trend
-      driveOutputNT.set(driveOutput);
-      driveFeedForwardNT.set(driveFeedforward);
-      driveDesiredStateSpeed.set(state.speedMetersPerSecond);
-      driveCurrentStateSpeed.set(getState().speedMetersPerSecond);               
-      drivePIDSetpointNT.set(m_drivePIDController.getSetpoint());
-      drivePIDVelocityErrNT.set(m_drivePIDController.getVelocityError());
-      drivePIDPositionErrNT.set(m_drivePIDController.getPositionError());
-      // Take PID calculated commands for the motor and send it
-      m_driveMotor.set(driveOutput + driveFeedforward);
-    };
+    // if (m_azimuthMotor.getDeviceID() == 43) {
+    //   // Output values to the network table to trend
+    //   // driveOutputNT.set(driveOutput);
+    //   // driveFeedForwardNT.set(driveFeedforward);
+    //   // driveDesiredStateSpeed.set(state.speedMetersPerSecond);
+    //   // driveCurrentStateSpeed.set(getState().speedMetersPerSecond);               
+    //   // drivePIDSetpointNT.set(m_drivePIDController.getSetpoint());
+    //   // drivePIDVelocityErrNT.set(m_drivePIDController.getVelocityError());
+    //   // drivePIDPositionErrNT.set(m_drivePIDController.getPositionError());
+
+    //   azimuthOutputNT.set(azimuthOutput);
+    //   azimuthFeedForwardNT.set(azimuthFeedforward);
+    //   azimuthDesiredStateAngle.set(state.angle.getDegrees());
+    //   azimuthCurrentStateAngle.set(getState().angle.getDegrees());               
+    //   // drivePIDSetpointNT.set(m_drivePIDController.getSetpoint());
+    //   // drivePIDVelocityErrNT.set(m_drivePIDController.getVelocityError());
+    //   // drivePIDPositionErrNT.set(m_drivePIDController.getPositionError());
+    //   // Take PID calculated commands for the motor and send it
+    //   // m_azimuthMotor.set(azimuthOutput + 0);
+    // };
     
     // NOTE: Uncomment below code for testing on the real robot
-    // m_driveMotor.set(driveOutput + driveFeedforward);
-    // m_azimuthMotor.set(azimuthOutput + azimuthFeedforward);
+    m_driveMotor.set(driveOutput + driveFeedforward);
+    m_azimuthMotor.set(azimuthOutput);
   }
 }
