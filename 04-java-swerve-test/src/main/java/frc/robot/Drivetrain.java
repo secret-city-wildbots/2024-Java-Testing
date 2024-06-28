@@ -19,7 +19,11 @@ import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
+import com.ctre.phoenix.motorcontrol.InvertType;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.Pigeon2;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 
 /** Represents a swerve drive style drivetrain. */
 public class Drivetrain {
@@ -47,12 +51,15 @@ public class Drivetrain {
   public static final double driveGearRatio = 7;
   public static final double azimuthGearRatio = 20;
 
+  // Get Module Confugrations
+  TalonFXConfiguration[] configs = swerveModuleConfigs();
+
   // NOTE: setup to be used with Holicanoli uncomment line 52 to use with the real robot.
   // private final SwerveModule m_module0 = new SwerveModule(10, 43, driveGearRatio, azimuthGearRatio);
-  private final SwerveModule m_module0 = new SwerveModule(10, 20, driveGearRatio, azimuthGearRatio);
-  private final SwerveModule m_module1 = new SwerveModule(11, 21, driveGearRatio, azimuthGearRatio);
-  private final SwerveModule m_module2 = new SwerveModule(12, 22, driveGearRatio, azimuthGearRatio);
-  private final SwerveModule m_module3 = new SwerveModule(13, 23, driveGearRatio, azimuthGearRatio);
+  private final SwerveModule m_module0 = new SwerveModule(10, 20, driveGearRatio, azimuthGearRatio, configs[0]);
+  private final SwerveModule m_module1 = new SwerveModule(11, 21, driveGearRatio, azimuthGearRatio, configs[1]);
+  private final SwerveModule m_module2 = new SwerveModule(12, 22, driveGearRatio, azimuthGearRatio, configs[2]);
+  private final SwerveModule m_module3 = new SwerveModule(13, 23, driveGearRatio, azimuthGearRatio, configs[3]);
 
   private final Pigeon2 m_pigeon = new Pigeon2(6, "canivore");
 
@@ -137,6 +144,29 @@ public class Drivetrain {
         });
   }
 
+  private TalonFXConfiguration[] swerveModuleConfigs() {
+    // Drive Motor Configs
+    TalonFXConfiguration[] configs = new TalonFXConfiguration[4];
+    configs[0] = new TalonFXConfiguration();
+    configs[0].HardwareLimitSwitch.ForwardLimitEnable = false;
+    configs[0].HardwareLimitSwitch.ReverseLimitEnable = false;
+    configs[0].MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    configs[1] = new TalonFXConfiguration();
+    configs[1].HardwareLimitSwitch.ForwardLimitEnable = false;
+    configs[1].HardwareLimitSwitch.ReverseLimitEnable = false;
+    configs[1].MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    configs[2] = new TalonFXConfiguration();
+    configs[2].HardwareLimitSwitch.ForwardLimitEnable = false;
+    configs[2].HardwareLimitSwitch.ReverseLimitEnable = false;
+    configs[2].MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    configs[3] = new TalonFXConfiguration();
+    configs[3].HardwareLimitSwitch.ForwardLimitEnable = false;
+    configs[3].HardwareLimitSwitch.ReverseLimitEnable = false;
+    configs[3].MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+
+    return configs;
+  }
+  
   public void advantageScope(XboxController controller) {
     // NOTE: Testing logging and seeing values on advantageScope
     double maxSpeed = 6.0; // m/s
