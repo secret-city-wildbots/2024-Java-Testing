@@ -13,13 +13,12 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.DoublePublisher;
 
 public class SwerveModule {
   // Network table communication
@@ -37,15 +36,6 @@ public class SwerveModule {
   private DoublePublisher azimuthFeedForwardNT = table.getDoubleTopic("azimuthFeedForwardNT").publish();
   private DoublePublisher azimuthDesiredStateAngle = table.getDoubleTopic("azimuthDesiredStateAngle").publish();
   private DoublePublisher azimuthCurrentStateAngle = table.getDoubleTopic("azimuthCurrentStateAngle").publish();
-
-  // SwerveModule Drive PID Values for Network Table
-  private DoublePublisher drivePIDSetpointNT = table.getDoubleTopic("PID Setpoint").publish();
-  private DoublePublisher drivePIDVelocityErrNT = table.getDoubleTopic("PID Velocity Err").publish();
-  private DoublePublisher drivePIDPositionErrNT = table.getDoubleTopic("PID Position Err").publish();
-
-  private DoublePublisher azimuthKPPublisher = table.getDoubleTopic("azimuth_KP").publish();
-  private DoublePublisher azimuthKIPublisher = table.getDoubleTopic("azimuth_KI").publish();
-  private DoublePublisher azimuthKDPublisher = table.getDoubleTopic("azimuth_KD").publish();
 
   // Constants for Swerve Module Characteristics
   private static final double kWheelRadius = 0.0636; // Wheel radius in Meters (2.5 inches)
@@ -140,10 +130,6 @@ public class SwerveModule {
       (m_driveMotor.getRotorVelocity().getValueAsDouble() / m_driveRatio) * (2 * Math.PI * kWheelRadius),
       new Rotation2d((m_azimuthMotor.getRotorPosition().getValueAsDouble() / m_azimuthRatio) * 2 * Math.PI)
     );
-
-    
-
-    m_azimuthPIDController.setPID()
   }
 
   /**
@@ -232,18 +218,11 @@ public class SwerveModule {
       driveFeedForwardNT.set(driveFeedforward);
       driveDesiredStateSpeed.set(state.speedMetersPerSecond);
       driveCurrentStateSpeed.set(getState().speedMetersPerSecond);               
-      drivePIDSetpointNT.set(m_drivePIDController.getSetpoint());
-      drivePIDVelocityErrNT.set(m_drivePIDController.getVelocityError());
-      drivePIDPositionErrNT.set(m_drivePIDController.getPositionError());
 
       azimuthOutputNT.set(azimuthOutput);
       azimuthFeedForwardNT.set(azimuthFeedforward);
       azimuthDesiredStateAngle.set(state.angle.getDegrees());
       azimuthCurrentStateAngle.set(getState().angle.getDegrees());
-      azimuthKPPublisher.set()
-      // drivePIDSetpointNT.set(m_drivePIDController.getSetpoint());
-      // drivePIDVelocityErrNT.set(m_drivePIDController.getVelocityError());
-      // drivePIDPositionErrNT.set(m_drivePIDController.getPositionError());
       // Take PID calculated commands for the motor and send it
       // m_azimuthMotor.set(azimuthOutput + 0);
     };

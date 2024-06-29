@@ -19,11 +19,9 @@ import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-import com.ctre.phoenix.motorcontrol.InvertType;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.signals.InvertedValue;
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
 
 /** Represents a swerve drive style drivetrain. */
 public class Drivetrain {
@@ -51,7 +49,7 @@ public class Drivetrain {
   public static final double driveGearRatio = 7;
   public static final double azimuthGearRatio = 20;
 
-  // Get Module Confugrations
+  // Get Swerve Module Drive Motor Confugrations
   TalonFXConfiguration[] configs = swerveModuleConfigs();
 
   // NOTE: setup to be used with Holicanoli uncomment line 52 to use with the real robot.
@@ -145,20 +143,55 @@ public class Drivetrain {
   }
 
   private TalonFXConfiguration[] swerveModuleConfigs() {
-    // Drive Motor Configs
+    /*
+     * configs will be an array of TalonFX Configurations (4 total - 1 for each swerve module)
+     * 
+     * Note: you will see that we have disabled on the drive motors the following:
+     *         - ForwardLimitEnable
+     *         - ReverseLimitEnable
+     *       This is because we have the shifters sensors connected to the motor controller input.
+     */
     TalonFXConfiguration[] configs = new TalonFXConfiguration[4];
+
+    /*
+     * Swerve Module Drive Motor Configs (Front Right)
+     * 
+     * Note: We need to set the motor output to be CCW (counter clockwise), becuase we have the bevel
+     * gears facing inwards.
+     */
     configs[0] = new TalonFXConfiguration();
     configs[0].HardwareLimitSwitch.ForwardLimitEnable = false;
     configs[0].HardwareLimitSwitch.ReverseLimitEnable = false;
     configs[0].MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+    
+    /*
+     * Swerve Module Drive Motor Configs (Front Left)
+     * 
+     * Note: We need to set the motor output to be CW (clockwise), because we have the bevel gears facing
+     * inwards.
+     */
     configs[1] = new TalonFXConfiguration();
     configs[1].HardwareLimitSwitch.ForwardLimitEnable = false;
     configs[1].HardwareLimitSwitch.ReverseLimitEnable = false;
     configs[1].MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+
+    /*
+     * Swerve Module Drive Motor Configs (Back Left)
+     * 
+     * Note: We need to set the motor output to be CW (clockwise), because we have the bevel gears facing
+     * inwards.
+     */
     configs[2] = new TalonFXConfiguration();
     configs[2].HardwareLimitSwitch.ForwardLimitEnable = false;
     configs[2].HardwareLimitSwitch.ReverseLimitEnable = false;
     configs[2].MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+
+    /*
+     * Swerve Module Drive Motor Configs (Back Right)
+     * 
+     * Note: We need to set the motor output to be CCW (counter clockwise), becuase we have the bevel
+     * gears facing inwards.
+     */
     configs[3] = new TalonFXConfiguration();
     configs[3].HardwareLimitSwitch.ForwardLimitEnable = false;
     configs[3].HardwareLimitSwitch.ReverseLimitEnable = false;
