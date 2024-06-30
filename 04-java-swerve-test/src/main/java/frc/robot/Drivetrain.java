@@ -102,8 +102,8 @@ public class Drivetrain {
     m_module2.setDesiredState(swerveModuleStates[2]);
     m_module3.setDesiredState(swerveModuleStates[3]);
 
-    // Build loggingState so advantageScope can see the values using the desired module states
-    double loggingState[] = {
+    // Build desiredState so advantageScope can see the values using the desired module states
+    double desiredState[] = {
       swerveModuleStates[1].angle.getDegrees(), // FL Swerve Module Rotation (degrees)
       swerveModuleStates[1].speedMetersPerSecond, // FL Swerve Drive Speed (m/s)
       swerveModuleStates[0].angle.getDegrees(), // FR Swerve Module Rotation (degrees)
@@ -114,20 +114,21 @@ public class Drivetrain {
       swerveModuleStates[3].speedMetersPerSecond, // BR Swerve Drive Speed (m/s)
     };
 
-    // The below code should log the actual values for the swerve modules
-    // double loggingState[] = {
-    //   m_module1.getState().angle.getDegrees(), // FL Swerve Module Rotation (degrees)
-    //   m_module1.getState().speedMetersPerSecond, // FL Swerve Drive Speed (m/s)
-    //   m_module0.getState().angle.getDegrees(), // FR Swerve Module Rotation (degrees)
-    //   m_module0.getState().speedMetersPerSecond, // FR Swerve Drive Speed (m/s)
-    //   m_module2.getState().angle.getDegrees(), // BL Swerve Module Rotation (degrees)
-    //   m_module2.getState().speedMetersPerSecond, // BL Swerve Drive Speed (m/s)
-    //   m_module3.getState().angle.getDegrees(), // BR Swerve Module Rotation (degrees)
-    //   m_module3.getState().speedMetersPerSecond, // BR Swerve Drive Speed (m/s)
-    // };
+    // Build actualState so advantageScope can see the values using the desired module states
+    double actualState[] = {
+      m_module1.getState().angle.getDegrees(), // FL Swerve Module Rotation (degrees)
+      m_module1.getState().speedMetersPerSecond, // FL Swerve Drive Speed (m/s)
+      m_module0.getState().angle.getDegrees(), // FR Swerve Module Rotation (degrees)
+      m_module0.getState().speedMetersPerSecond, // FR Swerve Drive Speed (m/s)
+      m_module2.getState().angle.getDegrees(), // BL Swerve Module Rotation (degrees)
+      m_module2.getState().speedMetersPerSecond, // BL Swerve Drive Speed (m/s)
+      m_module3.getState().angle.getDegrees(), // BR Swerve Module Rotation (degrees)
+      m_module3.getState().speedMetersPerSecond, // BR Swerve Drive Speed (m/s)
+    };
 
-    // Send loggingState to the SmartDashboard to be seen in advantageScope
-    SmartDashboard.putNumberArray("SwerveModuleStates", loggingState);
+    // Send desiredState and actualState to the SmartDashboard to be seen in advantageScope
+    SmartDashboard.putNumberArray("SwerveModuleDesiredStates", desiredState);
+    SmartDashboard.putNumberArray("SwerveModuleActualStates", actualState); 
   }
 
   /** Updates the field relative position of the robot. */

@@ -18,6 +18,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.networktables.DoublePublisher;
 
 public class SwerveModule {
@@ -62,7 +63,7 @@ public class SwerveModule {
 
   // Gains are for example purposes only - must be determined for your own robot!
   private final SimpleMotorFeedforward m_driveFeedforward = new SimpleMotorFeedforward(0.1, 0.3);
-  private final SimpleMotorFeedforward m_azimuthFeedforward = new SimpleMotorFeedforward(0.1, 0.5);
+  private final SimpleMotorFeedforward m_azimuthFeedforward = new SimpleMotorFeedforward(0.1, 0.0);
 
   /**
    * Constructs a SwerveModule with a drive motor, azimuth motor, drive encoder and azimuth encoder.
@@ -95,6 +96,12 @@ public class SwerveModule {
     // to be continuous.
     m_azimuthPIDController.enableContinuousInput(-Math.PI, Math.PI);
     m_azimuthMotor.setPosition(0.0);
+
+    // Add Drive PID Controller to SmartDashboard to easily adust the values live
+    SmartDashboard.putData("Drive PID Controller", m_drivePIDController);
+
+    // Add Azimuth PID Controller to SmartDashboard to easily adust the values live
+    SmartDashboard.putData("Azimuth PID Controller", m_azimuthPIDController);
   }
 
   /**
@@ -186,7 +193,6 @@ public class SwerveModule {
 
     // Calculate the drive output from the drive PID controller.
     // Clamp the output to be between -1 and +1
-    // final double driveOutput = state.speedMetersPerSecond / 5.8;
     final double driveOutput = MathUtil.clamp(
       m_drivePIDController.calculate(
         (m_driveMotor.getRotorVelocity().getValueAsDouble() / m_driveRatio) * (2 * Math.PI * kWheelRadius),
@@ -212,7 +218,7 @@ public class SwerveModule {
     final double azimuthFeedforward = m_azimuthFeedforward.calculate(m_azimuthPIDController.getSetpoint().velocity);
 
     // For testing purposes we are only going to test the Holicanoli drive motors first
-    if (m_azimuthMotor.getDeviceID() == 22) {
+    if (m_azimuthMotor.getDeviceID() == 20) {
       // Output values to the network table to trend
       driveOutputNT.set(driveOutput);
       driveFeedForwardNT.set(driveFeedforward);
@@ -220,15 +226,13 @@ public class SwerveModule {
       driveCurrentStateSpeed.set(getState().speedMetersPerSecond);               
 
       azimuthOutputNT.set(azimuthOutput);
-      azimuthFeedForwardNT.set(azimuthFeedforward);
+      azimuthFeedForwardNT.set(m_azimuthPIDController.getP());
       azimuthDesiredStateAngle.set(state.angle.getDegrees());
       azimuthCurrentStateAngle.set(getState().angle.getDegrees());
-      // Take PID calculated commands for the motor and send it
-      // m_azimuthMotor.set(azimuthOutput + 0);
     };
     
     // NOTE: Uncomment below code for testing on the real robot
     m_driveMotor.set(driveOutput + driveFeedforward);
-    m_azimuthMotor.set(azimuthOutput);
+    m_azimuthMotor.set(azimuthOutput + azimuthFeedforward);
   }
 }
