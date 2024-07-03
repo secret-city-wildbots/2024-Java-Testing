@@ -37,6 +37,10 @@ public class SwerveModule {
   private DoublePublisher azimuthFeedForwardNT = table.getDoubleTopic("azimuthFeedForwardNT").publish();
   private DoublePublisher azimuthDesiredStateAngle = table.getDoubleTopic("azimuthDesiredStateAngle").publish();
   private DoublePublisher azimuthCurrentStateAngle = table.getDoubleTopic("azimuthCurrentStateAngle").publish();
+  private DoublePublisher azimuthError = table.getDoubleTopic("azimuthError").publish();
+  
+  // private DoublePublisher azimuthDesiredStateAngle1 = table.getDoubleTopic("azimuthDesiredStateAngle").publish();
+  // private DoublePublisher azimuthCurrentStateAngle1 = table.getDoubleTopic("azimuthCurrentStateAngle").publish();
 
   // Constants for Swerve Module Characteristics
   private static final double kWheelRadius = 0.0636; // Wheel radius in Meters (2.5 inches)
@@ -87,7 +91,7 @@ public class SwerveModule {
     // m_driveMotor = new TalonFX(driveMotorID, "canivore");
     // m_azimuthMotor = new TalonFX(azimuthMotorID, "rio");
     m_driveMotor = new TalonFX(driveMotorID, "canivore");
-    m_azimuthMotor = new TalonFX(azimuthMotorID, "rio");
+    m_azimuthMotor = new TalonFX(azimuthMotorID, "canivore");
 
     // Set drive motor configs
     m_driveMotor.getConfigurator().apply(driveMotorConfigs);
@@ -105,6 +109,9 @@ public class SwerveModule {
 
     // Add Azimuth PID Controller to SmartDashboard to easily adust the values live
     SmartDashboard.putData("Azimuth PID Controller", m_azimuthPIDController);
+
+    // Add azimuth angle input to dashboard
+    SmartDashboard.putNumber("angle", 0.0);
   }
 
   /**
@@ -221,7 +228,7 @@ public class SwerveModule {
     // final double azimuthFeedforward = m_azimuthFeedforward.calculate(m_azimuthPIDController.getSetpoint().velocity);
 
     // For testing purposes we are only going to test the Holicanoli drive motors first
-    if (m_azimuthMotor.getDeviceID() == 43) {
+    if (m_azimuthMotor.getDeviceID() == 20) {
       // Output values to the network table to trend
       driveOutputNT.set(driveOutput);
       driveFeedForwardNT.set(driveFeedforward);
@@ -236,6 +243,70 @@ public class SwerveModule {
     
     // NOTE: Uncomment below code for testing on the real robot
     m_driveMotor.set(driveOutput + driveFeedforward);
+    m_azimuthMotor.set(azimuthOutput);
+    // m_azimuthMotor.set(azimuthOutput + azimuthFeedforward);
+  }
+
+  public void setDesiredAzimuth(SwerveModuleState desiredState) {
+    // Get the encoder rotation in radians
+    var encoderRotation = new Rotation2d((m_azimuthMotor.getRotorPosition().getValueAsDouble() / m_azimuthRatio) * 2 * Math.PI);
+
+    // Optimize the reference state to avoid spinning further than PI radians (90 degrees)
+    SwerveModuleState state = SwerveModuleState.optimize(desiredState, encoderRotation);
+
+    // Scale speed by cosine of angle error. This scales down movement perpendicular to the desired
+    // direction of travel that can occur when modules change directions. This results in smoother
+    // driving.
+    state.speedMetersPerSecond *= state.angle.minus(encoderRotation).getCos();
+
+    // Calculate the drive output from the drive PID controller.
+    // Clamp the output to be between -1 and +1
+    final double driveOutput = MathUtil.clamp(
+      m_drivePIDController.calculate(
+        (m_driveMotor.getRotorVelocity().getValueAsDouble() / m_driveRatio) * (2 * Math.PI * kWheelRadius),
+        state.speedMetersPerSecond
+      ),
+      -1.0, 
+      1.0
+    );
+
+    double kp = ((PIDController)SmartDashboard.getData("Azimuth PID Controller")).getP();
+    double ki = ((PIDController)SmartDashboard.getData("Azimuth PID Controller")).getI();
+    double kd = ((PIDController)SmartDashboard.getData("Azimuth PID Controller")).getD();
+    m_azimuthPIDController.setPID(kp, ki, kd);
+
+    // Do we need to make the clamp above -0.6 to +0.6 based on the ks and kv values set for SimpleMotorFeedForward?
+    final double driveFeedforward = m_driveFeedforward.calculate(state.speedMetersPerSecond);
+
+    // Calculate the azimuth motor output from the azimuth PID controller.
+    final double azimuthOutput = MathUtil.clamp(
+      m_azimuthPIDController.calculate(
+        (m_azimuthMotor.getRotorPosition().getValueAsDouble() / m_azimuthRatio) * 2 * Math.PI,
+        SmartDashboard.getNumber("angle", 0.0)/180*Math.PI
+      ),
+      -1.0,
+      1.0
+    );
+
+    // final double azimuthFeedforward = m_azimuthFeedforward.calculate(m_azimuthPIDController.getSetpoint().velocity);
+
+    // For testing purposes we are only going to test the Holicanoli drive motors first
+    if (m_azimuthMotor.getDeviceID() == 20) {
+      // Output values to the network table to trend
+      driveOutputNT.set(driveOutput);
+      driveFeedForwardNT.set(driveFeedforward);
+      driveDesiredStateSpeed.set(state.speedMetersPerSecond);
+      driveCurrentStateSpeed.set(getState().speedMetersPerSecond);               
+
+      azimuthOutputNT.set(azimuthOutput);
+      azimuthFeedForwardNT.set(m_azimuthPIDController.getP());
+      azimuthDesiredStateAngle.set(Math.abs(state.angle.getDegrees()));
+      azimuthCurrentStateAngle.set(Math.abs((getState().angle.getDegrees()))%180);
+      azimuthError.set(Math.abs(state.angle.getDegrees())-Math.abs((getState().angle.getDegrees())%180));
+    };
+    
+    // NOTE: Uncomment below code for testing on the real robot
+    m_driveMotor.set(0.0);
     m_azimuthMotor.set(azimuthOutput);
     // m_azimuthMotor.set(azimuthOutput + azimuthFeedforward);
   }

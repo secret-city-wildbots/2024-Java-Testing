@@ -38,7 +38,7 @@ public class Drivetrain {
   private NetworkTable table = inst.getTable("datatable");
   private StructPublisher<Pose3d> myPose = table.getStructTopic("myPose", Pose3d.struct).publish();
   
-  public static final double kMaxSpeed = 5.8; // meters per second
+  public static final double kMaxSpeed = 1.0; // meters per second
   public static final double kMaxAngularSpeed = Math.PI; // 1/2 rotation per second
 
   private final Translation2d m_module0Location = new Translation2d(0.254, -0.311);
@@ -47,14 +47,14 @@ public class Drivetrain {
   private final Translation2d m_module3Location = new Translation2d(-0.254, -0.311);
 
   public static final double driveGearRatio = 7;
-  public static final double azimuthGearRatio = 20;
+  public static final double azimuthGearRatio = 16;
 
   // Get Swerve Module Drive Motor Confugrations
   TalonFXConfiguration[] configs = swerveModuleConfigs();
 
   // NOTE: setup to be used with Holicanoli uncomment line 52 to use with the real robot.
   // private final SwerveModule m_module0 = new SwerveModule(10, 43, driveGearRatio, azimuthGearRatio);
-  private final SwerveModule m_module0 = new SwerveModule(10, 43, driveGearRatio, azimuthGearRatio, configs[0]);
+  private final SwerveModule m_module0 = new SwerveModule(10, 20, driveGearRatio, azimuthGearRatio, configs[0]);
   private final SwerveModule m_module1 = new SwerveModule(11, 21, driveGearRatio, azimuthGearRatio, configs[1]);
   private final SwerveModule m_module2 = new SwerveModule(12, 22, driveGearRatio, azimuthGearRatio, configs[2]);
   private final SwerveModule m_module3 = new SwerveModule(13, 23, driveGearRatio, azimuthGearRatio, configs[3]);
@@ -95,12 +95,17 @@ public class Drivetrain {
         : new ChassisSpeeds(xSpeed, ySpeed, rot), periodSeconds
       )
     );
+    
 
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, kMaxSpeed);
-    m_module0.setDesiredState(swerveModuleStates[0]);
-    m_module1.setDesiredState(swerveModuleStates[1]);
-    m_module2.setDesiredState(swerveModuleStates[2]);
-    m_module3.setDesiredState(swerveModuleStates[3]);
+    // m_module0.setDesiredState(swerveModuleStates[0]);
+    // m_module1.setDesiredState(swerveModuleStates[1]);
+    // m_module2.setDesiredState(swerveModuleStates[2]);
+    // m_module3.setDesiredState(swerveModuleStates[3]);
+    m_module0.setDesiredAzimuth(swerveModuleStates[0]);
+    m_module1.setDesiredAzimuth(swerveModuleStates[1]);
+    m_module2.setDesiredAzimuth(swerveModuleStates[2]);
+    m_module3.setDesiredAzimuth(swerveModuleStates[3]);
 
     // Build desiredState so advantageScope can see the values using the desired module states
     double desiredState[] = {
@@ -203,7 +208,8 @@ public class Drivetrain {
   
   public void advantageScope(XboxController controller) {
     // NOTE: Testing logging and seeing values on advantageScope
-    double maxSpeed = 6.0; // m/s
+    //double maxSpeed = 6.0; // m/s
+    double maxSpeed = 1.0;
     double maxRotation = 2 * Math.PI; // rad/s
 
     double xSpeedInput = -MathUtil.applyDeadband(controller.getLeftY(), 0.08);
