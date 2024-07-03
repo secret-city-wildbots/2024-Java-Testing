@@ -54,7 +54,7 @@ public class Drivetrain {
 
   // NOTE: setup to be used with Holicanoli uncomment line 52 to use with the real robot.
   // private final SwerveModule m_module0 = new SwerveModule(10, 43, driveGearRatio, azimuthGearRatio);
-  private final SwerveModule m_module0 = new SwerveModule(10, 20, driveGearRatio, azimuthGearRatio, configs[0]);
+  private final SwerveModule m_module0 = new SwerveModule(10, 43, driveGearRatio, azimuthGearRatio, configs[0]);
   private final SwerveModule m_module1 = new SwerveModule(11, 21, driveGearRatio, azimuthGearRatio, configs[1]);
   private final SwerveModule m_module2 = new SwerveModule(12, 22, driveGearRatio, azimuthGearRatio, configs[2]);
   private final SwerveModule m_module3 = new SwerveModule(13, 23, driveGearRatio, azimuthGearRatio, configs[3]);

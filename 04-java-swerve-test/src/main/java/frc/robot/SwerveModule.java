@@ -52,18 +52,21 @@ public class SwerveModule {
   // Gains tuned using ZN method (tuned on holicanoli without a load)
   private final PIDController m_drivePIDController = new PIDController(0.07386364, 0.4166666, 0.0);
 
+  // Azimuth PID Without Feedforward
+  private final PIDController m_azimuthPIDController = new PIDController(0.13204545,0.4166666,0.0);
+
   // Gains are for example purposes only - must be determined for your own robot!
-  private final ProfiledPIDController m_azimuthPIDController =
-      new ProfiledPIDController(
-          0.1,
-          0.0,
-          0.0,
-          new TrapezoidProfile.Constraints(
-              kModuleMaxAngularVelocity, kModuleMaxAngularAcceleration));
+  // private final ProfiledPIDController m_azimuthPIDController =
+  //     new ProfiledPIDController(
+  //         0.1,
+  //         0.0,
+  //         0.0,
+  //         new TrapezoidProfile.Constraints(
+  //             kModuleMaxAngularVelocity, kModuleMaxAngularAcceleration));
 
   // Gains are for example purposes only - must be determined for your own robot!
   private final SimpleMotorFeedforward m_driveFeedforward = new SimpleMotorFeedforward(0.1, 0.3);
-  private final SimpleMotorFeedforward m_azimuthFeedforward = new SimpleMotorFeedforward(0.1, 0.0);
+  private final SimpleMotorFeedforward m_azimuthFeedforward = new SimpleMotorFeedforward(0.15, 0.0125);
 
   /**
    * Constructs a SwerveModule with a drive motor, azimuth motor, drive encoder and azimuth encoder.
@@ -84,7 +87,7 @@ public class SwerveModule {
     // m_driveMotor = new TalonFX(driveMotorID, "canivore");
     // m_azimuthMotor = new TalonFX(azimuthMotorID, "rio");
     m_driveMotor = new TalonFX(driveMotorID, "canivore");
-    m_azimuthMotor = new TalonFX(azimuthMotorID, "canivore");
+    m_azimuthMotor = new TalonFX(azimuthMotorID, "rio");
 
     // Set drive motor configs
     m_driveMotor.getConfigurator().apply(driveMotorConfigs);
@@ -215,10 +218,10 @@ public class SwerveModule {
       1.0
     );
 
-    final double azimuthFeedforward = m_azimuthFeedforward.calculate(m_azimuthPIDController.getSetpoint().velocity);
+    // final double azimuthFeedforward = m_azimuthFeedforward.calculate(m_azimuthPIDController.getSetpoint().velocity);
 
     // For testing purposes we are only going to test the Holicanoli drive motors first
-    if (m_azimuthMotor.getDeviceID() == 20) {
+    if (m_azimuthMotor.getDeviceID() == 43) {
       // Output values to the network table to trend
       driveOutputNT.set(driveOutput);
       driveFeedForwardNT.set(driveFeedforward);
@@ -233,6 +236,7 @@ public class SwerveModule {
     
     // NOTE: Uncomment below code for testing on the real robot
     m_driveMotor.set(driveOutput + driveFeedforward);
-    m_azimuthMotor.set(azimuthOutput + azimuthFeedforward);
+    m_azimuthMotor.set(azimuthOutput);
+    // m_azimuthMotor.set(azimuthOutput + azimuthFeedforward);
   }
 }
