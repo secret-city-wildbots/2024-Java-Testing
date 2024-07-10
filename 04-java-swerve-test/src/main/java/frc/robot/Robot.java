@@ -18,6 +18,9 @@ public class Robot extends TimedRobot {
   private final SlewRateLimiter m_yspeedLimiter = new SlewRateLimiter(3);
   private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3);
 
+  //is baby mode active
+  private boolean babyModeActive = false;
+
   @Override
   public void autonomousPeriodic() {
     driveWithJoystick(false);
@@ -26,6 +29,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
+    checkForBabyToggle();
     driveWithJoystick(true);
   }
 
@@ -33,6 +37,12 @@ public class Robot extends TimedRobot {
   public void testPeriodic() {
     // NOTE: Testing logging and seeing values on advantageScope
     m_swerve.advantageScope(m_controller);
+  }
+
+  private void checkForBabyToggle() {
+    if (m_controller.getBButtonPressed()) {
+      babyModeActive = !babyModeActive;
+    }
   }
 
   private void driveWithJoystick(boolean fieldRelative) {
@@ -57,6 +67,6 @@ public class Robot extends TimedRobot {
         -m_rotLimiter.calculate(MathUtil.applyDeadband(m_controller.getRightX(), 0.08))
             * Drivetrain.kMaxAngularSpeed;
 
-    m_swerve.drive(xSpeed, -ySpeed, rot, fieldRelative, getPeriod());
+    m_swerve.drive(xSpeed * ((babyModeActive) ? 0.3:1), -ySpeed * ((babyModeActive) ? 0.3:1), rot, fieldRelative, getPeriod());
   }
 }
