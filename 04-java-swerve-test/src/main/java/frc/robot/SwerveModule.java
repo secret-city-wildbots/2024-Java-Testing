@@ -54,7 +54,8 @@ public class SwerveModule {
   private final TalonFX m_azimuthMotor;
 
   // Gains tuned using ZN method (tuned on holicanoli without a load)
-  private final PIDController m_drivePIDController = new PIDController(0.07386364, 0.4166666, 0.0);
+  private final PIDController m_drivePIDController = new PIDController(0.07386364, 2.3, 0.0);
+  //private final PIDController m_drivePIDController = new PIDController(0.07386364, 0.4166666, 0.0);
 
   // Azimuth PID Without Feedforward
   private final PIDController m_azimuthPIDController = new PIDController(0.13204545,0.4166666,0.0);
@@ -195,6 +196,11 @@ public class SwerveModule {
 
     // Optimize the reference state to avoid spinning further than PI radians (90 degrees)
     SwerveModuleState state = SwerveModuleState.optimize(desiredState, encoderRotation);
+
+    double kp = ((PIDController)SmartDashboard.getData("Drive PID Controller")).getP();
+    double ki = ((PIDController)SmartDashboard.getData("Drive PID Controller")).getI();
+    double kd = ((PIDController)SmartDashboard.getData("Drive PID Controller")).getD();
+    m_drivePIDController.setPID(kp, ki, kd);
 
     // Scale speed by cosine of angle error. This scales down movement perpendicular to the desired
     // direction of travel that can occur when modules change directions. This results in smoother

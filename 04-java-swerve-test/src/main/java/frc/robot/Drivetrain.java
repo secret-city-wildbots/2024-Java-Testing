@@ -38,8 +38,8 @@ public class Drivetrain {
   private NetworkTable table = inst.getTable("datatable");
   private StructPublisher<Pose3d> myPose = table.getStructTopic("myPose", Pose3d.struct).publish();
   
-  public static final double kMaxSpeed = 1.0; // meters per second
-  public static final double kMaxAngularSpeed = Math.PI; // 1/2 rotation per second
+  public static final double kMaxSpeed = 6.0; // meters per second
+  public static final double kMaxAngularSpeed = 2 * Math.PI; // 1/2 rotations per second
 
   private final Translation2d m_module0Location = new Translation2d(0.254, -0.311);
   private final Translation2d m_module1Location = new Translation2d(0.254, 0.311);
@@ -48,7 +48,7 @@ public class Drivetrain {
 
   public static final double driveGearRatio = 7;
   public static final double azimuthGearRatio = 16;
-
+  //Jasper is a bit special
   // Get Swerve Module Drive Motor Confugrations
   TalonFXConfiguration[] configs = swerveModuleConfigs();
 
@@ -98,14 +98,14 @@ public class Drivetrain {
     
 
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, kMaxSpeed);
-    // m_module0.setDesiredState(swerveModuleStates[0]);
-    // m_module1.setDesiredState(swerveModuleStates[1]);
-    // m_module2.setDesiredState(swerveModuleStates[2]);
-    // m_module3.setDesiredState(swerveModuleStates[3]);
-    m_module0.setDesiredAzimuth(swerveModuleStates[0]);
-    m_module1.setDesiredAzimuth(swerveModuleStates[1]);
-    m_module2.setDesiredAzimuth(swerveModuleStates[2]);
-    m_module3.setDesiredAzimuth(swerveModuleStates[3]);
+    m_module0.setDesiredState(swerveModuleStates[0]);
+    m_module1.setDesiredState(swerveModuleStates[1]);
+    m_module2.setDesiredState(swerveModuleStates[2]);
+    m_module3.setDesiredState(swerveModuleStates[3]);
+    // m_module0.setDesiredAzimuth(swerveModuleStates[0]);
+    // m_module1.setDesiredAzimuth(swerveModuleStates[1]);
+    // m_module2.setDesiredAzimuth(swerveModuleStates[2]);
+    // m_module3.setDesiredAzimuth(swerveModuleStates[3]);
 
     // Build desiredState so advantageScope can see the values using the desired module states
     double desiredState[] = {
