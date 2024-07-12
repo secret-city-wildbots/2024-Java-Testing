@@ -14,8 +14,8 @@ public class Robot extends TimedRobot {
   private final Drivetrain m_swerve = new Drivetrain();
 
   // Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
-  private final SlewRateLimiter m_xspeedLimiter = new SlewRateLimiter(3);
-  private final SlewRateLimiter m_yspeedLimiter = new SlewRateLimiter(3);
+  private final SlewRateLimiter m_xspeedLimiter = new SlewRateLimiter(6);
+  private final SlewRateLimiter m_yspeedLimiter = new SlewRateLimiter(6);
   private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3);
 
   //is baby mode active
@@ -67,6 +67,6 @@ public class Robot extends TimedRobot {
         -m_rotLimiter.calculate(MathUtil.applyDeadband(m_controller.getRightX(), 0.08))
             * Drivetrain.kMaxAngularSpeed;
 
-    m_swerve.drive(xSpeed * ((babyModeActive) ? 0.3:1), -ySpeed * ((babyModeActive) ? 0.3:1), rot, fieldRelative, getPeriod());
+    m_swerve.drive(xSpeed * ((babyModeActive) ? 0.2:1), -ySpeed * ((babyModeActive) ? 0.2:1), -rot * ((babyModeActive) ? 0.5:1), fieldRelative, getPeriod());
   }
 }

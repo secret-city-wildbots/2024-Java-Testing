@@ -54,7 +54,7 @@ public class SwerveModule {
   private final TalonFX m_azimuthMotor;
 
   // Gains tuned using ZN method (tuned on holicanoli without a load)
-  private final PIDController m_drivePIDController = new PIDController(0.07386364, 2.3, 0.0);
+  private final PIDController m_drivePIDController = new PIDController(0.07386364, 0.0, 0.0);
   //private final PIDController m_drivePIDController = new PIDController(0.07386364, 0.4166666, 0.0);
 
   // Azimuth PID Without Feedforward
