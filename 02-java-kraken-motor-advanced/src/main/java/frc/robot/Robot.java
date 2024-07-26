@@ -10,10 +10,15 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.AddressableLED;
+import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.networktables.DoublePublisher;
 
 /**
@@ -29,9 +34,11 @@ public class Robot extends TimedRobot {
   // Define constant for Canbus name on Holicanoli
   private static final String CANBUS_NAME = "rio";
   // Define the kraken motor on Holicanoli
-  private final TalonFX kraken = new TalonFX(43, CANBUS_NAME);
+  private final TalonFX kraken = new TalonFX(40, CANBUS_NAME);
   // Define krakenOut - This control mode will output a proportion of the supplied voltage which is supplied by the user.
   private final DutyCycleOut krakenOut = new DutyCycleOut(0);
+
+  private final PIDController m_PIDController = new PIDController(0.096383, 0.0, 0.0);
   // Define enableFOC - This will contorl if the motor will use FOC mode or not
   private Boolean enableFOC = false;
   // Define the joystick (xbox controller)
@@ -44,6 +51,14 @@ public class Robot extends TimedRobot {
   private double delta_wheel_rotations; // This will be in rotations
   private final double wheel_radius = 2.5; // Radius in inches
   private final double gear_ratio = 7; // input / output
+  private double rainbowStatus = 0;
+
+  final AddressableLED m_led = new AddressableLED(9);
+    // Reuse buffer
+    // Default to a length of 60, start empty output
+    // Length is expensive to set, so only set it once, then just update data
+    final AddressableLEDBuffer m_ledBuffer  = new AddressableLEDBuffer(52);
+
 
   /*
    * Network table variables and constants
@@ -64,6 +79,18 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
+
+    for (var i = 0; i < m_ledBuffer.getLength(); i++) {
+      // Sets the specified LED to the RGB values for red
+      m_ledBuffer.setHSV(i, 240, 100, 100);
+   }
+
+    m_led.setLength(m_ledBuffer.getLength());
+
+    // Set the data
+    m_led.setData(m_ledBuffer);
+    m_led.start();
+
     // Initialize a new TalonFXConfiguration Class
     var krakenConfiguration = new TalonFXConfiguration();
 
@@ -78,10 +105,39 @@ public class Robot extends TimedRobot {
     // Reset motor and wheel position to 0.0
     kraken.setPosition(0.0);
     wheel_distance = 0.0;
+
+    SmartDashboard.putData("Drive PID Controller", m_PIDController);
+  }
+
+  private void updateLEDRainbow() {
+    for (var i = 0; i < m_ledBuffer.getLength(); i++) {
+      // Sets the specified LED to the HSV values
+      m_ledBuffer.setRGB(i, i*20 + (int)(rainbowStatus), 100, 100);
+   }
+
+    // Set the data
+    m_led.setData(m_ledBuffer);
+
+    rainbowStatus+=2;
+    rainbowStatus%=360;
+  }
+  private void updateLEDLoading() {
+    for (var i = 0; i < m_ledBuffer.getLength(); i++) {
+      // Sets the specified LED to the HSV values
+      m_ledBuffer.setRGB(i, 0, (i==(int)rainbowStatus) ? 255:0, (i==(int)rainbowStatus) ? 0:0);
+   }
+
+    // Set the data
+    m_led.setData(m_ledBuffer);
+
+    rainbowStatus+=0.5;
+    rainbowStatus%=m_ledBuffer.getLength();
   }
 
   @Override
-  public void robotPeriodic() {}
+  public void robotPeriodic() {
+    
+  }
 
   @Override
   public void autonomousInit() {}
@@ -94,85 +150,25 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
+    updateLEDRainbow();
     // krakenOut.Output - Proportion of supply voltage to apply in fractional units between -1 and +1
     // Remember the controller Left and Right joysticks (x & y axis) output a range from -1 to +1
     // Negate the value to align with physical movements (up is forward and down and backward)
-    krakenOut.Output = -m_stick.getLeftY();
+    SmartDashboard.putNumber("Drive PID Controller ACTUAL", (kraken.getRotorVelocity().getValueAsDouble()));
+    SmartDashboard.putNumber("Drive PID Controller ACTUAL mathed", (kraken.getRotorVelocity().getValueAsDouble() / 7) * (2 * Math.PI * 0.0636));
 
-    // Enable / Disable FOC
-    enableFOC = true;
+    final double driveOutput = MathUtil.clamp(
+      m_PIDController.calculate(
+        (kraken.getRotorVelocity().getValueAsDouble() / 7) * (2 * Math.PI * 0.0636),
+        -m_stick.getLeftY()
+      ),
+      -1.0, 
+      1.0
+    );
 
-    // setControl​(DutyCycleOut request) - This control mode will output a proportion of the supplied voltage which is supplied by the user.
-    kraken.setControl(krakenOut.withEnableFOC(enableFOC));
+   kraken.set(driveOutput);
 
-    /*
-     * Calculate the distance travelled based on the kraken motor values
-     */
-
-    // Get the current motor shaft rotations
-    current_motor_rotations = kraken.getPosition().getValueAsDouble();
-    // Calculate the change in motor shaft rotations. This will be + / - depending on which way the motor is turning
-    delta_motor_rotations = current_motor_rotations - previous_motor_rotations;
-    // Calculate the wheel shaft rotations
-    delta_wheel_rotations = delta_motor_rotations / gear_ratio;
-    // Calculate the distance travelled (inches)
-    wheel_distance = wheel_distance + delta_wheel_rotations * 2 * Math.PI * wheel_radius;
-    // Set previous_motor_rotations to current_motor_rotations for next loop cycle
-    previous_motor_rotations = current_motor_rotations;
-
-    // Log infomation to the network table
-    /*
-     * kraken.getVelocity() - Velocity of the device in mechanism rotations per second. This can be the velocity of
-     * a remote sensor and is affected by the RotorToSensorRatio and SensorToMechanismRatio configs.
-     * 
-     * Default Settings
-     *   - Minimum Value: -512.0
-     *   - Maximum Value: 511.998046875
-     *   - Default Value: 0
-     *   - Units: rotations per second
-     * 
-     * Default Rates
-     *   - CAN 2.0: 50.0 Hz
-     *   - CAN FD: 100.0 Hz (TimeSynced with Pro)
-     */
-
-    /*
-     * Since we have the kraken x60 setup to the default values, I am expecting to see the following:
-     * 
-     * Kraken x60 (FOC) RPM = 5800
-     * Kraken x60 (FOC) RPS = 96.66
-     * 
-     * Kraken x60 (Trapezoidal) RPM = 6000
-     * Kraken x60 (Trapezoidal) RPS = 100
-     * 
-     * I am expecting to see the graph peak at 96.66 RPS when we give full power to the motor for FOC
-     * I am expecting to see the graph peak at 100 RPS when we give full power to the motor for Trapezoidal
-     */
-
-    krakenRotorVelocity.set(kraken.getVelocity().getValueAsDouble());
-
-
-    /*
-     * kraken.getPosition() - Position of the device in mechanism rotations. This can be the position of a
-     * remote sensor and is affected by the RotorToSensorRatio and SensorToMechanismRatio configs, as well as
-     * calls to setPosition.
-     * 
-     * Default Settings
-     *   - Minimum Value: -16384.0
-     *   - Maximum Value: 16383.9
-     *   - Default Value: 0
-     *   - Units: rotations
-     * 
-     * Default Rates
-     *   - CAN 2.0: 50.0 Hz
-     *   - CAN FD: 100.0 Hz (TimeSynced with Pro)
-     */
-    krakenRotorRotations.set(kraken.getPosition().getValueAsDouble());
-
-    /* 
-     * I am expecting the distance to go up and down depending on the direction of the motor.
-     */
-    wheelDistanceTravelled.set(wheel_distance);
+   // krakenOut.Output = driveOutput;
   }
 
   @Override
@@ -180,6 +176,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledPeriodic() {
+    updateLEDLoading();
     // krakenOut.Output - Proportion of supply voltage to apply in fractional units between -1 and +1
     // Zero out controls in disabled mode so we aren't relying on the enable frame
     krakenOut.Output = 0;
