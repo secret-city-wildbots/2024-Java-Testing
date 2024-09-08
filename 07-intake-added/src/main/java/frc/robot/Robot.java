@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 public class Robot extends TimedRobot {
   private final XboxController m_controller = new XboxController(0);
   private final Drivetrain m_swerve = new Drivetrain();
+  private final Intake m_intake = new Intake(0.5, 0.5, 0.5);
   private final SysId m_sysid = new SysId();
 
   // Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
@@ -21,8 +22,11 @@ public class Robot extends TimedRobot {
   private final SlewRateLimiter m_yspeedLimiter = new SlewRateLimiter(6);
   private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3);
 
-  //is baby mode active
+  // is baby mode active
   private boolean babyModeActive = false;
+
+  // run SysID?
+  // private final boolean runSysID = false;
 
   @Override
   public void autonomousPeriodic() {
@@ -32,24 +36,34 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    if (m_controller.getRightBumper() == true) {
-      if (m_controller.getBButton()) {
-        m_sysid.sysIdQuasistatic(SysIdRoutine.Direction.kForward);
-      }
-      if (m_controller.getAButton()) {
-        m_sysid.sysIdQuasistatic(SysIdRoutine.Direction.kReverse);
-      }
-      if (m_controller.getYButton()) {
-        m_sysid.sysIdDynamic(SysIdRoutine.Direction.kForward);
-      }
-      if (m_controller.getXButton()) {
-        m_sysid.sysIdDynamic(SysIdRoutine.Direction.kReverse);
-      }
-    } else {
-      checkForBabyToggle();
-      driveWithJoystick(true);
+    /*
+     * Only for running SysID
+     * if (runSysID && m_controller.getRightBumper()){
+     * if (m_controller.getBButton()) {
+     * m_sysid.sysIdQuasistatic(SysIdRoutine.Direction.kForward);
+     * }
+     * if (m_controller.getAButton()) {
+     * m_sysid.sysIdQuasistatic(SysIdRoutine.Direction.kReverse);
+     * }
+     * if (m_controller.getYButton()) {
+     * m_sysid.sysIdDynamic(SysIdRoutine.Direction.kForward);
+     * }
+     * if (m_controller.getXButton()) {
+     * m_sysid.sysIdDynamic(SysIdRoutine.Direction.kReverse);
+     * }
+     * } else {
+     */
+    m_intake.updateSensors();
+    checkForBabyToggle();
+    driveWithJoystick(true);
+
+    if (m_controller.getRightBumper()) {
+      m_intake.toggle();
     }
+    
+    m_intake.updateOutputs();
   }
+  // }
 
   @Override
   public void testPeriodic() {
@@ -66,25 +80,23 @@ public class Robot extends TimedRobot {
   private void driveWithJoystick(boolean fieldRelative) {
     // Get the x speed. We are inverting this because Xbox controllers return
     // negative values when we push forward.
-    final var xSpeed =
-        -m_xspeedLimiter.calculate(MathUtil.applyDeadband(-m_controller.getLeftY(), 0.08))
-            * Drivetrain.kMaxSpeed;
+    final var xSpeed = -m_xspeedLimiter.calculate(MathUtil.applyDeadband(-m_controller.getLeftY(), 0.08))
+        * Drivetrain.kMaxSpeed;
 
     // Get the y speed or sideways/strafe speed. We are inverting this because
     // we want a positive value when we pull to the left. Xbox controllers
     // return positive values when you pull to the right by default.
-    final var ySpeed =
-        -m_yspeedLimiter.calculate(MathUtil.applyDeadband(m_controller.getLeftX(), 0.08))
-            * Drivetrain.kMaxSpeed;
+    final var ySpeed = -m_yspeedLimiter.calculate(MathUtil.applyDeadband(m_controller.getLeftX(), 0.08))
+        * Drivetrain.kMaxSpeed;
 
     // Get the rate of angular rotation. We are inverting this because we want a
     // positive value when we pull to the left (remember, CCW is positive in
     // mathematics). Xbox controllers return positive values when you pull to
     // the right by default.
-    final var rot =
-        -m_rotLimiter.calculate(MathUtil.applyDeadband(m_controller.getRightX(), 0.08))
-            * Drivetrain.kMaxAngularSpeed;
+    final var rot = -m_rotLimiter.calculate(MathUtil.applyDeadband(m_controller.getRightX(), 0.08))
+        * Drivetrain.kMaxAngularSpeed;
 
-    m_swerve.drive(xSpeed * ((babyModeActive) ? 0.2:1), -ySpeed * ((babyModeActive) ? 0.2:1), -rot * ((babyModeActive) ? 0.5:1), fieldRelative, getPeriod());
+    m_swerve.drive(xSpeed * ((babyModeActive) ? 0.2 : 1), -ySpeed * ((babyModeActive) ? 0.2 : 1),
+        -rot * ((babyModeActive) ? 0.5 : 1), fieldRelative, getPeriod());
   }
 }
