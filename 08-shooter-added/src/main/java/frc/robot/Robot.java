@@ -35,9 +35,6 @@ public class Robot extends TimedRobot {
   private final SlewRateLimiter m_yspeedLimiter = new SlewRateLimiter(6);
   private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3);
 
-  // is baby mode active
-  private boolean babyModeActive = false;
-
   @Override
   public void autonomousPeriodic() {
     driveWithJoystick(false);
@@ -67,7 +64,6 @@ public class Robot extends TimedRobot {
     getHighPrioritySensors();
 
     // Check for any drive updates and drive accordingly
-    checkForBabyToggle();
     driveWithJoystick(true);
     Pose2d robotPosition = m_swerve.updateOdometry().getPoseMeters();
 
@@ -81,7 +77,7 @@ public class Robot extends TimedRobot {
     // controller inputs
     m_shooter.updateWrist(robotPosition);
     m_shooter.updateShooter(m_driverController.getRightTriggerAxis() > 0.2,
-        m_driverController.getLeftTriggerAxis() > 0.7, robotPosition);
+        m_driverController.getLeftTriggerAxis() > 0.7, robotPosition, m_intake.bbBroken);
 
     updateOutputs();
   }
@@ -101,12 +97,6 @@ public class Robot extends TimedRobot {
   public void testPeriodic() {
     // NOTE: Testing logging and seeing values on advantageScope
     m_swerve.advantageScope(m_driverController);
-  }
-
-  private void checkForBabyToggle() {
-    if (m_driverController.getBButtonPressed()) {
-      babyModeActive = !babyModeActive;
-    }
   }
 
   public void updateMasterState() {
@@ -147,7 +137,7 @@ public class Robot extends TimedRobot {
     final var rot = -m_rotLimiter.calculate(MathUtil.applyDeadband(m_driverController.getRightX(), 0.08))
         * Drivetrain.kMaxAngularSpeed;
 
-    m_swerve.drive(xSpeed * ((babyModeActive) ? 0.2 : 1), -ySpeed * ((babyModeActive) ? 0.2 : 1),
-        -rot * ((babyModeActive) ? 0.5 : 1), fieldRelative, getPeriod());
+    m_swerve.drive(xSpeed, -ySpeed,
+        -rot, fieldRelative, getPeriod());
   }
 }

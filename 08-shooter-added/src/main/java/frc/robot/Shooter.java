@@ -4,12 +4,14 @@ import frc.robot.Utility.*;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.ForwardLimitValue;
+// import com.ctre.phoenix6.signals.ForwardLimitValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.ReverseLimitValue;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Shooter {
 
@@ -23,7 +25,7 @@ public class Shooter {
 
     public static ShooterStates state = ShooterStates.SUB;
 
-    public static boolean wristStowed = false;
+    public static boolean wristStowed = true;
     private double shooterPower;
     private double shooterRatio;
     private boolean spin = false;
@@ -46,7 +48,11 @@ public class Shooter {
     private TalonFXConfiguration rightConfig = new TalonFXConfiguration();
     private TalonFXConfiguration leftConfig = new TalonFXConfiguration();
 
+    private double wristFeedForward = 0;
+    private double wristArbitraryFFScalar = 0.000001;
+
     private PIDController wristController = new PIDController(0, 0, 0);
+    
 
     private final double wristRatio;
 
@@ -62,13 +68,19 @@ public class Shooter {
         wristConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         wrist.getConfigurator().apply(wristConfig);
 
-        rightConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        rightConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
         rightConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
         right.getConfigurator().apply(rightConfig);
 
         leftConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
         leftConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
         left.getConfigurator().apply(leftConfig);
+
+        SmartDashboard.putData("Wrist PID Controller", wristController);
+        SmartDashboard.putNumber("Wrist FF Scalar", wristArbitraryFFScalar);
+        SmartDashboard.putNumber("Wrist FF Output", wristFeedForward);
+
+        wrist.setPosition(0);
     }
 
     public void updateSensors() {
@@ -76,11 +88,16 @@ public class Shooter {
         leftTemp = left.getDeviceTemp().getValueAsDouble();
         rightVelocity = right.getRotorVelocity().getValueAsDouble() * 60;
         leftVelocity = left.getRotorVelocity().getValueAsDouble() * 60;
-        wristStowed = wrist.getForwardLimit().getValue() == ForwardLimitValue.ClosedToGround;
+        wristStowed = wrist.getReverseLimit().getValue() == ReverseLimitValue.ClosedToGround;
         wristAngle = wrist.getRotorPosition().getValueAsDouble() / 2048 * 360 / wristRatio; // ticks -> degrees
         if ((rightVelocity > (0.8*shooterPower)*6000) && (leftVelocity > (0.8*shooterPower*shooterRatio)*6000)) {
             spunUp = true;
         }
+
+        // The sin of the wrist angle * wrist COG * gravity * Wrist mass * arbitrary scalar
+        wristArbitraryFFScalar = SmartDashboard.getNumber("Wrist FF Scalar", 1);
+        wristFeedForward = Math.sin((wristAngle+36)/180*Math.PI) * 0.5 * 32.17 * 20 * wristArbitraryFFScalar;
+        SmartDashboard.putNumber("Wrist FF Output", wristFeedForward);
     }
 
     public void updateWrist(Pose2d robotPosition) {
@@ -111,14 +128,19 @@ public class Shooter {
                 // idk what to put here yet, it depends on the trap sequence
                 break;
         }
+
+        double kp = ((PIDController)SmartDashboard.getData("Wrist PID Controller")).getP();
+        double ki = ((PIDController)SmartDashboard.getData("Wrist PID Controller")).getI();
+        double kd = ((PIDController)SmartDashboard.getData("Wrist PID Controller")).getD();
+        wristController.setPID(kp, ki, kd);
     }
 
-    public void updateShooter(boolean rightTrigger, boolean leftTrigger, Pose2d robotPosition) {
+    public void updateShooter(boolean rightTrigger, boolean leftTrigger, Pose2d robotPosition, boolean haveNote) {
         if (leftTrigger || rightTrigger) {
             spin = true;
         } else if (Robot.masterState == Robot.MasterStates.AMP) {
             spin = true;
-        } else if (robotPosition.getY()*39.37 < 312 && Intake.bbBroken) {
+        } else if (robotPosition.getY()*39.37 < 312 && haveNote) {
             spin = true;
         } else {
             spin = false;
@@ -151,9 +173,11 @@ public class Shooter {
 
 
     public void updateOutputs() {
+        System.out.println(wrist.getRotorPosition().getValueAsDouble()*360/wristRatio);
+        System.out.println(wristOutput);
         right.set((spin) ? shooterPower : 0);
         left.set((spin) ? shooterPower*shooterRatio : 0);
-        wrist.set(wristController.calculate(wrist.getRotorPosition().getValueAsDouble()*360, wristOutput)); // Everything must be in degrees
-    }
+        wrist.set(wristFeedForward + wristController.calculate(wrist.getRotorPosition().getValueAsDouble()*360/wristRatio, wristOutput)); // Everything must be in degrees
+    }   
 }
 
