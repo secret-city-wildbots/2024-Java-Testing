@@ -4,13 +4,14 @@
 
 package frc.robot;
 
-// import frc.robot.SysId;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.math.geometry.Pose2d;
-// import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine; // Uncomment for SysID
+// import edu.wpi.first.networktables.DoublePublisher;
+// import edu.wpi.first.networktables.NetworkTable;
+// import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class Robot extends TimedRobot {
   public static enum MasterStates {
@@ -28,12 +29,14 @@ public class Robot extends TimedRobot {
   private final Drivetrain m_swerve = new Drivetrain();
   private final Intake m_intake = new Intake(0.5, 0.5, 0.5);
   private final Shooter m_shooter = new Shooter(0.7, 0.576, 98);
-  // private final SysId m_sysid = new SysId(); //Uncomment for sysID
+  private final Elevator m_elevator = new Elevator(7.72);
 
   // Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
   private final SlewRateLimiter m_xspeedLimiter = new SlewRateLimiter(6);
   private final SlewRateLimiter m_yspeedLimiter = new SlewRateLimiter(6);
   private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3);
+
+  
 
   @Override
   public void autonomousPeriodic() {
@@ -43,23 +46,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    /*
-     * Only for running SysID
-     * if (m_controller.getRightBumper()){
-     * if (m_controller.getBButton()) {
-     * m_sysid.sysIdQuasistatic(SysIdRoutine.Direction.kForward);
-     * }
-     * if (m_controller.getAButton()) {
-     * m_sysid.sysIdQuasistatic(SysIdRoutine.Direction.kReverse);
-     * }
-     * if (m_controller.getYButton()) {
-     * m_sysid.sysIdDynamic(SysIdRoutine.Direction.kForward);
-     * }
-     * if (m_controller.getXButton()) {
-     * m_sysid.sysIdDynamic(SysIdRoutine.Direction.kReverse);
-     * }
-     * } else {
-     */
     // Start by updating all sensor values
     getHighPrioritySensors();
 
@@ -77,20 +63,23 @@ public class Robot extends TimedRobot {
     // controller inputs
     m_shooter.updateWrist(robotPosition);
     m_shooter.updateShooter(m_driverController.getRightTriggerAxis() > 0.2,
-        m_driverController.getLeftTriggerAxis() > 0.7, robotPosition, m_intake.bbBroken);
+    m_driverController.getLeftTriggerAxis() > 0.7, robotPosition, m_intake.bbBroken);
+
+    m_elevator.updateElevator();
 
     updateOutputs();
   }
-  // }
 
   private void getHighPrioritySensors() {
     m_intake.updateSensors();
     m_shooter.updateSensors();
+    m_elevator.updateSensors();
   }
 
   private void updateOutputs() {
     m_intake.updateOutputs();
     m_shooter.updateOutputs();
+    m_elevator.updateOutputs();
   }
 
   @Override
