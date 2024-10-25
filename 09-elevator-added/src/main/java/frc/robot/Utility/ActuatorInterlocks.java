@@ -7,10 +7,16 @@ public class ActuatorInterlocks {
     private static double testingPeriod;
     private static double testingValue;
 
+    public static boolean isTesting() {
+        testingActuator = Dashboard.testActuatorName.get();
+        return !testingActuator.equals("No_Test");
+    }
+
     public static double TAI_Motors(String actuatorName, double normalOutput){
         testingActuator = Dashboard.testActuatorName.get();
         testingPeriod = Dashboard.testActuatorPeriod.get();
         testingValue = Dashboard.testActuatorValue.get();
+
         if (testingActuator.equals("No_Test")) {
             return normalOutput;
         }
@@ -18,7 +24,7 @@ public class ActuatorInterlocks {
             if (testingPeriod == 0){
                 return testingValue;
             } else {
-                return testingValue * Math.sin((double)System.currentTimeMillis() /1000.0 * Math.PI / testingPeriod);
+                return testingValue * Math.sin((double)System.currentTimeMillis() * 0.001 * Math.PI / testingPeriod);
             }
         }
         else {

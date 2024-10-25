@@ -52,14 +52,13 @@ public class Shooter {
     private double wristArbitraryFFScalar = 0.000001;
 
     private PIDController wristController = new PIDController(0, 0, 0);
-    
 
     private final double wristRatio;
 
-    public Shooter (
-        double shootPower, 
-        double shooterWheelRatio,
-        double wristGearRatio) {
+    public Shooter(
+            double shootPower,
+            double shooterWheelRatio,
+            double wristGearRatio) {
         shooterPower = shootPower;
         shooterRatio = shooterWheelRatio;
         wristRatio = wristGearRatio;
@@ -90,13 +89,15 @@ public class Shooter {
         leftVelocity = left.getRotorVelocity().getValueAsDouble() * 60;
         wristStowed = wrist.getReverseLimit().getValue() == ReverseLimitValue.ClosedToGround;
         wristAngle = wrist.getRotorPosition().getValueAsDouble() / 2048 * 360 / wristRatio; // ticks -> degrees
-        if ((rightVelocity > (0.8*shooterPower)*6000) && (leftVelocity > (0.8*shooterPower*shooterRatio)*6000)) {
+        if ((rightVelocity > (0.8 * shooterPower) * 6000)
+                && (leftVelocity > (0.8 * shooterPower * shooterRatio) * 6000)) {
             spunUp = true;
         }
 
-        // The sin of the wrist angle * wrist COG * gravity * Wrist mass * arbitrary scalar
+        // The sin of the wrist angle * wrist COG * gravity * Wrist mass * arbitrary
+        // scalar
         wristArbitraryFFScalar = SmartDashboard.getNumber("Wrist FF Scalar", 1);
-        wristFeedForward = Math.sin((wristAngle+36)/180*Math.PI) * 0.5 * 32.17 * 20 * wristArbitraryFFScalar;
+        wristFeedForward = Math.sin((wristAngle + 36) / 180 * Math.PI) * 0.5 * 32.17 * 20 * wristArbitraryFFScalar;
         SmartDashboard.putNumber("Wrist FF Output", wristFeedForward);
     }
 
@@ -129,9 +130,9 @@ public class Shooter {
                 break;
         }
 
-        double kp = ((PIDController)SmartDashboard.getData("Wrist PID Controller")).getP();
-        double ki = ((PIDController)SmartDashboard.getData("Wrist PID Controller")).getI();
-        double kd = ((PIDController)SmartDashboard.getData("Wrist PID Controller")).getD();
+        double kp = ((PIDController) SmartDashboard.getData("Wrist PID Controller")).getP();
+        double ki = ((PIDController) SmartDashboard.getData("Wrist PID Controller")).getI();
+        double kd = ((PIDController) SmartDashboard.getData("Wrist PID Controller")).getD();
         wristController.setPID(kp, ki, kd);
     }
 
@@ -140,7 +141,7 @@ public class Shooter {
             spin = true;
         } else if (Robot.masterState == Robot.MasterStates.AMP) {
             spin = true;
-        } else if (robotPosition.getY()*39.37 < 312 && haveNote) {
+        } else if (robotPosition.getY() * 39.37 < 312 && haveNote) {
             spin = true;
         } else {
             spin = false;
@@ -157,27 +158,27 @@ public class Shooter {
         int length = col1.length - 1;
         if (col1.length < 2) {
             if (value < col1[0]) {
-                return col2[0] - (((col2[1] - col2[0])/(col1[1] - col1[0])) * (col1[0] - value));
+                return col2[0] - (((col2[1] - col2[0]) / (col1[1] - col1[0])) * (col1[0] - value));
             } else {
                 for (int i = 1; i < col1.length; i++) {
                     if (value < col1[i]) {
-                      return col2[i-1] + (((col2[i] - col2[i-1])/(col1[i] - col1[i-1])) * (col1[i] - value));
+                        return col2[i - 1] + (((col2[i] - col2[i - 1]) / (col1[i] - col1[i - 1])) * (col1[i] - value));
                     }
                 }
-            return col2[length] + (((col2[length] - col2[length-1])/(col1[length] - col1[length-1])) * (value - col1[length]));
+                return col2[length] + (((col2[length] - col2[length - 1]) / (col1[length] - col1[length - 1]))
+                        * (value - col1[length]));
             }
         } else {
             return 0;
         }
     }
 
-
     public void updateOutputs() {
         // System.out.println(wrist.getRotorPosition().getValueAsDouble()*360/wristRatio);
         // System.out.println(wristOutput);
-        right.set((spin) ? shooterPower : 0);
-        left.set((spin) ? shooterPower*shooterRatio : 0);
-        wrist.set(wristFeedForward + wristController.calculate(wrist.getRotorPosition().getValueAsDouble()*360/wristRatio, wristOutput)); // Everything must be in degrees
-    }   
+        right.set(ActuatorInterlocks.TAI_Motors("Shooter_Right_(p)", (spin) ? shooterPower : 0));
+        left.set(ActuatorInterlocks.TAI_Motors("Shooter_Left_(p)", (spin) ? shooterPower * shooterRatio : 0));
+        wrist.set(ActuatorInterlocks.TAI_Motors("Wrist_(p)", wristFeedForward + wristController
+                .calculate(wrist.getRotorPosition().getValueAsDouble() * 360 / wristRatio, wristOutput)));
+    }
 }
-

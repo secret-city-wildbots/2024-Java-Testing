@@ -7,7 +7,9 @@ import edu.wpi.first.networktables.StringArrayPublisher;
 import edu.wpi.first.networktables.StringSubscriber;
 
 public class Dashboard {
+    @SuppressWarnings("unused")
     private NetworkTableInstance inst;
+    @SuppressWarnings("unused")
     private NetworkTable table;
 
     public static StringArrayPublisher legalActuatorNames;

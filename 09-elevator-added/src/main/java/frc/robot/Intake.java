@@ -89,6 +89,5 @@ public class Intake {
         front.set(ActuatorInterlocks.TAI_Motors("Outer_Roller_Front_(p)", (enabled) ? outerIntakePower : 0));
         back.set(ActuatorInterlocks.TAI_Motors("Outer_Roller_Back_(p)", (enabled) ? outerIntakePower : 0));
         indexer.set(ActuatorInterlocks.TAI_Motors("Indexer_(p)", (indexing) ? indexerIntakePower : 0));
-
     }
 }

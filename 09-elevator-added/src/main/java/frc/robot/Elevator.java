@@ -8,6 +8,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Utility.ActuatorInterlocks;
 
 public class Elevator {
     public static boolean stowed = true;
@@ -15,15 +16,15 @@ public class Elevator {
     private final TalonFX elevator = new TalonFX(17, "rio");
     private TalonFXConfiguration elevatorConfig = new TalonFXConfiguration();
 
-    private final double elevatorRatio; //from inches to rotations, multiplier
+    private final double elevatorRatio; // from inches to rotations, multiplier
     private double elevatorFeedForward = 0;
     private double elevatorArbitraryFFScalar = 0;
-    private double elevatorOutput = 0; //inches
+    private double elevatorOutput = 0; // inches
 
     private PIDController elevatorController = new PIDController(0, 0, 0);
 
     private MotionMagicConfigs m = elevatorConfig.MotionMagic;
-    
+
     private final PositionDutyCycle elevatorControlRequest = new PositionDutyCycle(0).withSlot(0);
 
     public Elevator(double ratio) {
@@ -68,11 +69,12 @@ public class Elevator {
                 break;
         }
 
-        double kp = ((PIDController)SmartDashboard.getData("Elevator PID Controller")).getP();
-        double ki = ((PIDController)SmartDashboard.getData("Elevator PID Controller")).getI();
-        double kd = ((PIDController)SmartDashboard.getData("Elevator PID Controller")).getD();
-        
-        if ((elevatorController.getP() != kp) || (elevatorController.getP() != kp) || (elevatorController.getP() != kp)) { //only update pid's when needed
+        double kp = ((PIDController) SmartDashboard.getData("Elevator PID Controller")).getP();
+        double ki = ((PIDController) SmartDashboard.getData("Elevator PID Controller")).getI();
+        double kd = ((PIDController) SmartDashboard.getData("Elevator PID Controller")).getD();
+
+        if ((elevatorController.getP() != kp) || (elevatorController.getP() != kp)
+                || (elevatorController.getP() != kp)) { // only update pid's when needed
             elevatorController.setPID(kp, ki, kd);
             elevatorConfig.Slot0.kP = kp;
             elevatorConfig.Slot0.kI = ki;
@@ -82,6 +84,12 @@ public class Elevator {
     }
 
     public void updateOutputs() {
-        elevator.setControl(elevatorControlRequest.withPosition(elevatorOutput*elevatorRatio).withFeedForward(elevatorFeedForward));
-    }  
+        if (!ActuatorInterlocks.isTesting()) {
+            elevator.setControl(elevatorControlRequest
+                    .withPosition(elevatorOutput * elevatorRatio)
+                    .withFeedForward(elevatorFeedForward));
+        } else {
+            elevator.set(ActuatorInterlocks.TAI_Motors("Elevator_(p)", 0.0));
+        }
+    }
 }

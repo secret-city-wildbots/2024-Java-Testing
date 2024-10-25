@@ -27,27 +27,29 @@ public class Robot extends TimedRobot {
   private final Intake m_intake = new Intake(0.5, 0.5, 0.5);
   private final Shooter m_shooter = new Shooter(0.7, 0.576, 98);
   private final Elevator m_elevator = new Elevator(7.72);
+  
+  @SuppressWarnings("unused")
   private final Dashboard m_Dashboard = new Dashboard();
 
-  private final String[] actuatorNames = {"No_Test", "Center_Intake_(p)", "Outer_Roller_Front_(p)", "Outer_Roller_Back_(p)", "Indexer_(p)"};
+  private final String[] actuatorNames = { "No_Test", "Elevator_(p)", "Center_Intake_(p)", "Outer_Roller_Front_(p)",
+      "Outer_Roller_Back_(p)", "Indexer_(p)", "Shooter_Right_(p)", "Shooter_Left_(p)", "Wrist_(p)"};
 
   // Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
   private final SlewRateLimiter m_xspeedLimiter = new SlewRateLimiter(6);
   private final SlewRateLimiter m_yspeedLimiter = new SlewRateLimiter(6);
   private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3);
 
-  public Robot(){
+  public Robot() {
     Dashboard.legalActuatorNames.set(actuatorNames);
   }
 
   @Override
-  public void robotPeriodic(){
+  public void robotPeriodic() {
   }
 
   @Override
   public void disabledPeriodic() {
-    
-    
+
   }
 
   @Override
@@ -58,8 +60,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    
-
     // Start by updating all sensor values
     getHighPrioritySensors();
 
@@ -77,7 +77,7 @@ public class Robot extends TimedRobot {
     // controller inputs
     m_shooter.updateWrist(robotPosition);
     m_shooter.updateShooter(m_driverController.getRightTriggerAxis() > 0.2,
-    m_driverController.getLeftTriggerAxis() > 0.7, robotPosition, m_intake.bbBroken);
+        m_driverController.getLeftTriggerAxis() > 0.7, robotPosition, m_intake.bbBroken);
 
     m_elevator.updateElevator();
 
@@ -144,5 +144,3 @@ public class Robot extends TimedRobot {
         -rot, fieldRelative, getPeriod());
   }
 }
-
-
