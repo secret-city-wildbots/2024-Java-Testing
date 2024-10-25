@@ -9,9 +9,6 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.math.geometry.Pose2d;
-// import edu.wpi.first.networktables.DoublePublisher;
-// import edu.wpi.first.networktables.NetworkTable;
-// import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class Robot extends TimedRobot {
   public static enum MasterStates {
@@ -30,13 +27,28 @@ public class Robot extends TimedRobot {
   private final Intake m_intake = new Intake(0.5, 0.5, 0.5);
   private final Shooter m_shooter = new Shooter(0.7, 0.576, 98);
   private final Elevator m_elevator = new Elevator(7.72);
+  private final Dashboard m_Dashboard = new Dashboard();
+
+  private final String[] actuatorNames = {"No_Test", "Center_Intake_(p)", "Outer_Roller_Front_(p)", "Outer_Roller_Back_(p)", "Indexer_(p)"};
 
   // Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
   private final SlewRateLimiter m_xspeedLimiter = new SlewRateLimiter(6);
   private final SlewRateLimiter m_yspeedLimiter = new SlewRateLimiter(6);
   private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3);
 
-  
+  public Robot(){
+    Dashboard.legalActuatorNames.set(actuatorNames);
+  }
+
+  @Override
+  public void robotPeriodic(){
+  }
+
+  @Override
+  public void disabledPeriodic() {
+    
+    
+  }
 
   @Override
   public void autonomousPeriodic() {
@@ -46,6 +58,8 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
+    
+
     // Start by updating all sensor values
     getHighPrioritySensors();
 
@@ -130,3 +144,5 @@ public class Robot extends TimedRobot {
         -rot, fieldRelative, getPeriod());
   }
 }
+
+

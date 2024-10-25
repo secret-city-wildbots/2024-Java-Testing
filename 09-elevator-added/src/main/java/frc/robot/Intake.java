@@ -9,6 +9,7 @@ import com.revrobotics.CANSparkLowLevel.MotorType;
 import com.revrobotics.SparkLimitSwitch.Type;
 
 import edu.wpi.first.wpilibj.XboxController;
+import frc.robot.Utility.ActuatorInterlocks;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 
@@ -31,9 +32,9 @@ public class Intake {
     private final SparkLimitSwitch beamBreak = indexer.getForwardLimitSwitch(Type.kNormallyOpen);
 
     public Intake(
-        double innerPower, 
-        double outerPower, 
-        double indexerPower) {
+            double innerPower,
+            double outerPower,
+            double indexerPower) {
         outerIntakePower = outerPower;
         innerIntakePower = innerPower;
         indexerIntakePower = indexerPower;
@@ -53,7 +54,7 @@ public class Intake {
         backTemp = back.getDeviceTemp().getValueAsDouble();
     }
 
-    public void updateIntake(XboxController driveController, boolean readyToShoot){
+    public void updateIntake(XboxController driveController, boolean readyToShoot) {
         // Turns off intake and allow indexing when note is picked up
         if (bbBroken) {
             enabled = false;
@@ -63,10 +64,10 @@ public class Intake {
         }
         if (driveController.getRightBumperPressed()) {
             toggle();
-          }
-        indexing =  (driveController.getLeftTriggerAxis()>0.7) || 
-                    (enabled && (!bbBroken)) ||
-                    (bbBroken && (driveController.getRightTriggerAxis()>0.7) && readyToShoot);
+        }
+        indexing = (driveController.getLeftTriggerAxis() > 0.7) ||
+                (enabled && (!bbBroken)) ||
+                (bbBroken && (driveController.getRightTriggerAxis() > 0.7) && readyToShoot);
     }
 
     public void toggle() {
@@ -84,9 +85,10 @@ public class Intake {
     }
 
     public void updateOutputs() {
-        inner.set((enabled) ? innerIntakePower : 0);
-        front.set((enabled) ? outerIntakePower : 0);
-        back.set((enabled) ? outerIntakePower : 0);
-        indexer.set((indexing) ? indexerIntakePower : 0);
+        inner.set(ActuatorInterlocks.TAI_Motors("Center_Intake_(p)", (enabled) ? innerIntakePower : 0));
+        front.set(ActuatorInterlocks.TAI_Motors("Outer_Roller_Front_(p)", (enabled) ? outerIntakePower : 0));
+        back.set(ActuatorInterlocks.TAI_Motors("Outer_Roller_Back_(p)", (enabled) ? outerIntakePower : 0));
+        indexer.set(ActuatorInterlocks.TAI_Motors("Indexer_(p)", (indexing) ? indexerIntakePower : 0));
+
     }
 }

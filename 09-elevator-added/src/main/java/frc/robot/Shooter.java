@@ -173,8 +173,8 @@ public class Shooter {
 
 
     public void updateOutputs() {
-        System.out.println(wrist.getRotorPosition().getValueAsDouble()*360/wristRatio);
-        System.out.println(wristOutput);
+        // System.out.println(wrist.getRotorPosition().getValueAsDouble()*360/wristRatio);
+        // System.out.println(wristOutput);
         right.set((spin) ? shooterPower : 0);
         left.set((spin) ? shooterPower*shooterRatio : 0);
         wrist.set(wristFeedForward + wristController.calculate(wrist.getRotorPosition().getValueAsDouble()*360/wristRatio, wristOutput)); // Everything must be in degrees
