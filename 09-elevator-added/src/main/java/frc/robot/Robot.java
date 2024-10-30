@@ -21,9 +21,12 @@ public class Robot extends TimedRobot {
 
   public static MasterStates masterState = MasterStates.STOWED;
 
+  public static double robotLength = 19;
+  public static double robotWidth = 23;
+
+  private final NewDrivetrain drivetrain = new NewDrivetrain();
   private final XboxController m_driverController = new XboxController(0);
   private final XboxController m_manipController = new XboxController(1);
-  private final Drivetrain m_swerve = new Drivetrain();
   private final Intake m_intake = new Intake(0.5, 0.5, 0.5);
   private final Shooter m_shooter = new Shooter(0.7, 0.576, 98);
   private final Elevator m_elevator = new Elevator(7.72);
@@ -33,14 +36,11 @@ public class Robot extends TimedRobot {
 
   private final String[] actuatorNames = { "No_Test", "Elevator_(p)", "Center_Intake_(p)", "Outer_Roller_Front_(p)",
       "Outer_Roller_Back_(p)", "Indexer_(p)", "Shooter_Right_(p)", "Shooter_Left_(p)", "Wrist_(p)"};
-
-  // Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
-  private final SlewRateLimiter m_xspeedLimiter = new SlewRateLimiter(6);
-  private final SlewRateLimiter m_yspeedLimiter = new SlewRateLimiter(6);
-  private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3);
+  public static final String[] legalDrivers = {"Devin", "Reed", "Driver 3", "Driver 4", "Driver 5", "Programmers", "Kidz"};
 
   public Robot() {
     Dashboard.legalActuatorNames.set(actuatorNames);
+    Dashboard.legalDrivers.set(legalDrivers);
   }
 
   @Override
@@ -54,8 +54,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousPeriodic() {
-    driveWithJoystick(false);
-    m_swerve.updateOdometry();
+    drivetrain.updateOdometry();
   }
 
   @Override
@@ -64,8 +63,8 @@ public class Robot extends TimedRobot {
     getHighPrioritySensors();
 
     // Check for any drive updates and drive accordingly
-    driveWithJoystick(true);
-    Pose2d robotPosition = m_swerve.updateOdometry().getPoseMeters();
+    Pose2d robotPosition = drivetrain.updateOdometry().getPoseMeters();
+    drivetrain.drive(m_driverController, isAutonomous(), getPeriod());
 
     // Check for state updates based on manip inputs
     updateMasterState();
@@ -77,7 +76,7 @@ public class Robot extends TimedRobot {
     // controller inputs
     m_shooter.updateWrist(robotPosition);
     m_shooter.updateShooter(m_driverController.getRightTriggerAxis() > 0.2,
-        m_driverController.getLeftTriggerAxis() > 0.7, robotPosition, m_intake.bbBroken);
+    m_driverController.getLeftTriggerAxis() > 0.7, robotPosition, m_intake.bbBroken);
 
     m_elevator.updateElevator();
 
@@ -94,12 +93,11 @@ public class Robot extends TimedRobot {
     m_intake.updateOutputs();
     m_shooter.updateOutputs();
     m_elevator.updateOutputs();
+    drivetrain.updateOutputs();
   }
 
   @Override
   public void testPeriodic() {
-    // NOTE: Testing logging and seeing values on advantageScope
-    m_swerve.advantageScope(m_driverController);
   }
 
   public void updateMasterState() {
@@ -119,28 +117,5 @@ public class Robot extends TimedRobot {
     } else if (m_manipController.getLeftTriggerAxis() > 0.7 && m_manipController.getStartButton()) {
       masterState = MasterStates.CLIMBING;
     }
-  }
-
-  private void driveWithJoystick(boolean fieldRelative) {
-    // Get the x speed. We are inverting this because Xbox controllers return
-    // negative values when we push forward.
-    final var xSpeed = -m_xspeedLimiter.calculate(MathUtil.applyDeadband(-m_driverController.getLeftY(), 0.08))
-        * Drivetrain.kMaxSpeed;
-
-    // Get the y speed or sideways/strafe speed. We are inverting this because
-    // we want a positive value when we pull to the left. Xbox controllers
-    // return positive values when you pull to the right by default.
-    final var ySpeed = -m_yspeedLimiter.calculate(MathUtil.applyDeadband(m_driverController.getLeftX(), 0.08))
-        * Drivetrain.kMaxSpeed;
-
-    // Get the rate of angular rotation. We are inverting this because we want a
-    // positive value when we pull to the left (remember, CCW is positive in
-    // mathematics). Xbox controllers return positive values when you pull to
-    // the right by default.
-    final var rot = -m_rotLimiter.calculate(MathUtil.applyDeadband(m_driverController.getRightX(), 0.08))
-        * Drivetrain.kMaxAngularSpeed;
-
-    m_swerve.drive(xSpeed, -ySpeed,
-        -rot, fieldRelative, getPeriod());
   }
 }

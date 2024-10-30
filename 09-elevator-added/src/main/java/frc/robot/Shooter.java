@@ -21,7 +21,7 @@ public class Shooter {
         LOB
     }
 
-    private double[][] wristCalibrations = FileHelpers.parseCSV("/home/lvuser/calibrations/wristCalibrations.csv");
+    private double[][] wristCalibrations = FileHelpers.parseCSV("/home/lvuser/calibrations/WristAngleByDistance.csv");
 
     public static ShooterStates state = ShooterStates.SUB;
 
