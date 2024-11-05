@@ -1,16 +1,25 @@
 package frc.robot;
 
+import frc.robot.Utility.ClassHelpers.Timer;
+
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.revrobotics.CANSparkLowLevel.MotorType;
+import com.revrobotics.CANSparkBase;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.SparkAbsoluteEncoder;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
+import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 
 public class NewSwerveModule {
+    private final double shiftToHighRPM = 4000;
+    private final double shiftToLowRPM = 500;
     private static final double kWheelRadius = 0.0636;
 
     private final double driveRatio;
@@ -20,10 +29,29 @@ public class NewSwerveModule {
     private final TalonFX azimuthTalon;
     private CANSparkMax azimuthSpark;
     private SparkAbsoluteEncoder azimuthEncoder;
+    private final DoubleSolenoid shifter;
 
     private boolean azimuthSparkActive;
 
+
+
+    /**
+     * Creates a new swerve module object
+     * 
+     * @param driveRatio The gear ratio between the drive motor and the wheel
+     * @param azimuthRatio The gear ratio between the azimuth motor and the rotation of the wheel
+     * @param moduleNumber The number of the module starting at 0 in the top right and increasing in a ccw circle
+     * @param configs Configurations for the drive motor, use SwerveUtils.swerveModuleConfigs()
+     * 
+     */
     public NewSwerveModule(double driveRatio, double azimuthRatio, int moduleNumber, TalonFXConfiguration configs) {
+        if (moduleNumber<3) {
+            shifter = new DoubleSolenoid(PneumaticsModuleType.REVPH, 2-moduleNumber, 13+moduleNumber);
+        } else {
+            shifter = new DoubleSolenoid(PneumaticsModuleType.REVPH, 3, 12);
+        }
+        shifter.set(Value.kForward);
+        
         this.driveRatio = driveRatio;
         this.azimuthRatio = azimuthRatio;
 
@@ -45,8 +73,14 @@ public class NewSwerveModule {
 
 
 
+    /**
+     * Returns the position of the drive and azimuth motors
+     * 
+     * @return A SwerveModulePosition object
+     */
     public SwerveModulePosition getPosition() {
         Rotation2d rotation;
+        //Decide between using spark and talon
         if (azimuthSparkActive) {
             rotation = new Rotation2d(azimuthEncoder.getPosition() / azimuthRatio * 2 * Math.PI);
         } else {
@@ -57,9 +91,68 @@ public class NewSwerveModule {
         rotation);
     }
 
-    public void updateOutputs(SwerveModuleState moduleState) {
-        
+
+    /**
+     * Gets any faults from the drive and azimuth motors
+     * 
+     * @return A boolean array with the structure:
+     *   <ul>
+     *      <li> drive fault,
+     *      <li> azimuth fault
+     */
+
+    public boolean[] getSwerveFaults() {
+        // Decide between using spark and talon
+        boolean azimuthFault;
+        if (azimuthSparkActive) {
+            azimuthFault = azimuthSpark.getFault(CANSparkBase.FaultID);
+        }
+        return new boolean[]{};
     }
 
-    
+
+    private boolean shifterOutput0 = false;
+    Timer shiftThreshold = new Timer();
+    /**
+     * 
+     * @param moduleState
+     * @param isAutonomous
+     */
+    public void updateOutputs(SwerveModuleState moduleState, boolean isAutonomous) {
+        if (isAutonomous) {
+
+        } else {
+            if (shifterOutput0) {
+                // Currently commanded to high gear
+                if (Math.abs(drive.getVelocity().getValueAsDouble())>shiftToLowRPM) {
+                    shiftThreshold.reset();
+                }
+                shifterOutput0 = shiftThreshold.getTimeMillis()<150;
+            } else {
+                // Currently commanded to low gear
+                if (Math.abs(drive.getVelocity().getValueAsDouble())<shiftToHighRPM) {
+                    shiftThreshold.reset();
+                }
+                shifterOutput0 = shiftThreshold.getTimeMillis()>150;
+            }
+        }
+    }
+
+
+
+    /**
+     * Temperature of drive motor
+     * 
+     * <ul>
+     *   <li> <b>Minimum Value:</b> 0.0
+     *   <li> <b>Maximum Value:</b> 255.0
+     *   <li> <b>Default Value:</b> 0
+     *   <li> <b>Units:</b> ℃
+     * </ul>
+     * 
+     * @return Double temperature in degrees Celcius
+     */
+    public double getTemp() {
+        return drive.getDeviceTemp().getValueAsDouble();
+    }
 }

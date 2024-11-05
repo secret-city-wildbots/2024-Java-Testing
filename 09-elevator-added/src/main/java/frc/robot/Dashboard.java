@@ -1,5 +1,6 @@
 package frc.robot;
 
+import edu.wpi.first.networktables.DoubleArrayPublisher;
 import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -14,6 +15,10 @@ public class Dashboard {
 
     public static StringArrayPublisher legalActuatorNames;
     public static StringArrayPublisher legalDrivers;
+    public static DoubleArrayPublisher swerve0Details;
+    public static DoubleArrayPublisher swerve1Details;
+    public static DoubleArrayPublisher swerve2Details;
+    public static DoubleArrayPublisher swerve3Details;
 
     public static StringSubscriber testActuatorName;
     public static DoubleSubscriber testActuatorValue;
@@ -27,6 +32,10 @@ public class Dashboard {
 
         legalActuatorNames = table.getStringArrayTopic("Legal_Actuator_Names").publish();
         legalDrivers = table.getStringArrayTopic("Legal_Drivers").publish();
+        swerve0Details = table.getDoubleArrayTopic("Swerve_0_Details").publish();
+        swerve1Details = table.getDoubleArrayTopic("Swerve_1_Details").publish();
+        swerve2Details = table.getDoubleArrayTopic("Swerve_2_Details").publish();
+        swerve3Details = table.getDoubleArrayTopic("Swerve_3_Details").publish();
 
         testActuatorName = table.getStringTopic("Test_Actuator_Name").subscribe("");
         testActuatorValue = table.getDoubleTopic("Test_Actuator_Value").subscribe(0.0);

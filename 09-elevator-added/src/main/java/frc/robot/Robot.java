@@ -6,6 +6,8 @@ package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -24,12 +26,13 @@ public class Robot extends TimedRobot {
   public static double robotLength = 19;
   public static double robotWidth = 23;
 
-  private final NewDrivetrain drivetrain = new NewDrivetrain();
+  private final Drivetrain drivetrain = new Drivetrain();
   private final XboxController m_driverController = new XboxController(0);
   private final XboxController m_manipController = new XboxController(1);
   private final Intake m_intake = new Intake(0.5, 0.5, 0.5);
   private final Shooter m_shooter = new Shooter(0.7, 0.576, 98);
   private final Elevator m_elevator = new Elevator(7.72);
+  private final Compressor compressor = new Compressor(2, PneumaticsModuleType.REVPH);
   
   @SuppressWarnings("unused")
   private final Dashboard m_Dashboard = new Dashboard();
@@ -59,6 +62,9 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
+    // Enable compressor
+    compressor.enableAnalog(100, 120);
+
     // Start by updating all sensor values
     getHighPrioritySensors();
 
@@ -93,7 +99,7 @@ public class Robot extends TimedRobot {
     m_intake.updateOutputs();
     m_shooter.updateOutputs();
     m_elevator.updateOutputs();
-    drivetrain.updateOutputs();
+    drivetrain.updateOutputs(isAutonomous());
   }
 
   @Override
