@@ -33,13 +33,18 @@ public class Robot extends TimedRobot {
   private final Shooter m_shooter = new Shooter(0.7, 0.576, 98);
   private final Elevator m_elevator = new Elevator(7.72);
   private final Compressor compressor = new Compressor(2, PneumaticsModuleType.REVPH);
-  
+
   @SuppressWarnings("unused")
   private final Dashboard m_Dashboard = new Dashboard();
 
-  private final String[] actuatorNames = { "No_Test", "Elevator_(p)", "Center_Intake_(p)", "Outer_Roller_Front_(p)",
-      "Outer_Roller_Back_(p)", "Indexer_(p)", "Shooter_Right_(p)", "Shooter_Left_(p)", "Wrist_(p)"};
-  public static final String[] legalDrivers = {"Devin", "Reed", "Driver 3", "Driver 4", "Driver 5", "Programmers", "Kidz"};
+  private final String[] actuatorNames = { "No_Test", "Drive_0_(p)", "Drive_1_(p)", "Drive_2_(p)", "Drive_3_(p)",
+      "Azimuth_0_(p)", "Azimuth_1_(p)", "Azimuth_2_(p)", "Azimuth_3_(p)", "Swerve_0_Shifter_(b)",
+      "Swerve_1_Shifter_(b)",
+      "Swerve_2_Shifter_(b)", "Swerve_3_Shifter_(b)", "Elevator_(p)", "Center_Intake_(p)",
+      "Outer_Roller_Front_(p)",
+      "Outer_Roller_Back_(p)", "Indexer_(p)", "Shooter_Right_(p)", "Shooter_Left_(p)", "Wrist_(p)" };
+  public static final String[] legalDrivers = { "Devin", "Reed", "Driver 3", "Driver 4", "Driver 5", "Programmers",
+      "Kidz" };
 
   public Robot() {
     Dashboard.legalActuatorNames.set(actuatorNames);
@@ -82,7 +87,7 @@ public class Robot extends TimedRobot {
     // controller inputs
     m_shooter.updateWrist(robotPosition);
     m_shooter.updateShooter(m_driverController.getRightTriggerAxis() > 0.2,
-    m_driverController.getLeftTriggerAxis() > 0.7, robotPosition, m_intake.bbBroken);
+        m_driverController.getLeftTriggerAxis() > 0.7, robotPosition, m_intake.bbBroken);
 
     m_elevator.updateElevator();
 

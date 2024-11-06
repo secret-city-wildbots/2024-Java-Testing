@@ -1,5 +1,6 @@
 package frc.robot;
 
+import frc.robot.Utility.ActuatorInterlocks;
 import frc.robot.Utility.ClassHelpers.Timer;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -24,6 +25,7 @@ public class NewSwerveModule {
 
     private final double driveRatio;
     private final double azimuthRatio;
+    private final int moduleNumber;
 
     private final TalonFX drive;
     private final TalonFX azimuthTalon;
@@ -54,6 +56,7 @@ public class NewSwerveModule {
         
         this.driveRatio = driveRatio;
         this.azimuthRatio = azimuthRatio;
+        this.moduleNumber = moduleNumber;
 
         this.drive = new TalonFX(10 + moduleNumber, "canivore");
         this.azimuthTalon = new TalonFX(20 + moduleNumber, "canivore");
@@ -100,17 +103,20 @@ public class NewSwerveModule {
      *      <li> drive fault,
      *      <li> azimuth fault
      */
-
     public boolean[] getSwerveFaults() {
         // Decide between using spark and talon
         boolean azimuthFault;
         if (azimuthSparkActive) {
-            azimuthFault = azimuthSpark.getFault(CANSparkBase.FaultID);
+            azimuthFault = (short)0 != azimuthSpark.getFaults();
+        } else {
+            azimuthFault = 0 != azimuthTalon.getFaultField().getValueAsDouble();
         }
-        return new boolean[]{};
+        boolean driveFault = drive.getFaultField().getValueAsDouble() != 0;
+        return new boolean[]{driveFault, azimuthFault};
     }
 
 
+    // 0 indicates prior loop output
     private boolean shifterOutput0 = false;
     Timer shiftThreshold = new Timer();
     /**
@@ -118,24 +124,37 @@ public class NewSwerveModule {
      * @param moduleState
      * @param isAutonomous
      */
-    public void updateOutputs(SwerveModuleState moduleState, boolean isAutonomous) {
-        if (isAutonomous) {
-
+    public void updateOutputs(SwerveModuleState moduleState, boolean isAutonomous, boolean fLow) {
+        if (fLow) {
+            shifterOutput0 = false;
         } else {
-            if (shifterOutput0) {
-                // Currently commanded to high gear
-                if (Math.abs(drive.getVelocity().getValueAsDouble())>shiftToLowRPM) {
-                    shiftThreshold.reset();
-                }
-                shifterOutput0 = shiftThreshold.getTimeMillis()<150;
+            if (isAutonomous) {
+                shifterOutput0 = true;
             } else {
-                // Currently commanded to low gear
-                if (Math.abs(drive.getVelocity().getValueAsDouble())<shiftToHighRPM) {
-                    shiftThreshold.reset();
+                if (shifterOutput0) {
+                    // Currently commanded to high gear
+                    if (Math.abs(drive.getVelocity().getValueAsDouble())>shiftToLowRPM) {
+                        shiftThreshold.reset();
+                    }
+                    shifterOutput0 = shiftThreshold.getTimeMillis()<150;
+                } else {
+                    // Currently commanded to low gear
+                    if (Math.abs(drive.getVelocity().getValueAsDouble())<shiftToHighRPM) {
+                        shiftThreshold.reset();
+                    }
+                    shifterOutput0 = shiftThreshold.getTimeMillis()>150;
                 }
-                shifterOutput0 = shiftThreshold.getTimeMillis()>150;
             }
         }
+    
+        if (ActuatorInterlocks.TAI_Solenoids("Swerve_" +((Integer)moduleNumber).toString() + "_Shifter_(b)", fLow)) {
+            shifter.set(Value.kForward);
+        } else {
+            shifter.set(Value.kReverse);
+        }
+
+        double azimuthOutput = ActuatorInterlocks.TAI_Motors("Azimuth_" + ((Integer)moduleNumber).toString() + "_(p)", moduleState.angle.getDegrees());
+        double driveOutput = ActuatorInterlocks.TAI_Motors("Drive_" + ((Integer)moduleNumber).toString() + "_(p)", moduleState.speedMetersPerSecond);
     }
 
 

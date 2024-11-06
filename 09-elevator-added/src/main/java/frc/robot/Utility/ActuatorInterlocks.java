@@ -32,4 +32,24 @@ public class ActuatorInterlocks {
         }
     }
 
+    public static boolean TAI_Solenoids(String actuatorName, boolean normalOutput){
+        testingActuator = Dashboard.testActuatorName.get();
+        testingPeriod = Dashboard.testActuatorPeriod.get();
+        testingValue = Dashboard.testActuatorValue.get();
+
+        if (testingActuator.equals("No_Test")) {
+            return normalOutput;
+        }
+        else if (testingActuator.equals(actuatorName)) {
+            if (testingValue == 1.0) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        else {
+            return false;
+        }
+    }
+
 }

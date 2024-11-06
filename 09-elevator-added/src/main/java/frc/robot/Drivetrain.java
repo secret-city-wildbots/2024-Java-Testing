@@ -121,6 +121,8 @@ public class Drivetrain {
             orientedStrafe[0], orientedStrafe[1], assistedRotation, m_pigeon.getRotation2d()), period));
     SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, 1);
 
+
+
     Dashboard.swerve0Details.set(new double[]{
       moduleStates[0].angle.getDegrees(),
       module0.getTemp(),
@@ -260,10 +262,36 @@ public class Drivetrain {
     }
   }
 
+  
+  private boolean[] driveFaults = new boolean[4];
+  private boolean[] azimuthFaults = new boolean[4];
+
+
+
+  /**
+   * 
+   * @return A boolean array with the structure:
+   *  <ul>
+   *    <li> drive faults
+   *    <li> azimuth faults
+   */
+  public boolean[] getFaults() {
+    boolean[] faults0 = module0.getSwerveFaults();
+    boolean[] faults1 = module1.getSwerveFaults();
+    boolean[] faults2 = module2.getSwerveFaults();
+    boolean[] faults3 = module3.getSwerveFaults();
+    boolean driveFault = faults0[0] || faults1[0] || faults2[0] || faults3[0];
+    boolean azimuthFault = faults0[1] || faults1[1] || faults2[1] || faults3[1];
+    return new boolean[]{driveFault, azimuthFault};
+  }
+
+  
   public void updateOutputs(boolean isAutonomous) {
-    module0.updateOutputs(moduleStates[0]);
-    module1.updateOutputs(moduleStates[1]);
-    module2.updateOutputs(moduleStates[2]);
-    module3.updateOutputs(moduleStates[3]);
+    boolean[] faults = getFaults();
+    boolean fLow = faults[0] || faults[1];
+    module0.updateOutputs(moduleStates[0], isAutonomous, fLow);
+    module1.updateOutputs(moduleStates[1], isAutonomous, fLow);
+    module2.updateOutputs(moduleStates[2], isAutonomous, fLow);
+    module3.updateOutputs(moduleStates[3], isAutonomous, fLow);
   }
 }
