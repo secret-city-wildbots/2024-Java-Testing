@@ -99,18 +99,36 @@ public class SwerveUtils {
     return configs;
   }
 
+  /**
+   * Scales and caps raw joystick outputs based on current selected driver profile
+   * settings
+   * 
+   * @param driverController
+   * @param isAutonomous
+   * 
+   * @return Scaled joystick outputs
+   */
   public static double[] swerveScaleStrafe(XboxController driverController, boolean isAutonomous) {
-    String profile = Robot.legalDrivers[(int)Dashboard.selectedDriver.get(0.0)];
+
+    // Getting driver profile settings
+    String profile = Robot.legalDrivers[(int) Dashboard.selectedDriver.get(0.0)];
     DriverProfile currentProfile = SwerveUtils.readDriverProfiles(profile);
     double deadband = (isAutonomous) ? 0.01 : currentProfile.strafeDeadband;
     double strafeScaling = ((isAutonomous) ? 1 : currentProfile.strafeScaling);
     double strafeMax = ((isAutonomous) ? 1 : currentProfile.strafeMax);
-    double rawX = -1*driverController.getLeftY();
-    double rawY = -1*driverController.getLeftX();
+
+    // Negate and swap raw joystick outputs to work with FRC field orientation
+    double rawX = -1 * driverController.getLeftY();
+    double rawY = -1 * driverController.getLeftX();
+
+    // Disable joystick outputs while within deadband
     double joystickSaturation = Math.sqrt((rawX * rawX) + (rawY * rawY));
     if (joystickSaturation <= deadband) {
       return new double[] { 0.0, 0.0 };
     }
+
+    // Sanitize joystick saturation (insure it isn't more than 1 and prevent
+    // dividing by 0)
     double joystickRange;
     if (joystickSaturation > 1.0) {
       joystickRange = 1;
@@ -118,14 +136,18 @@ public class SwerveUtils {
       joystickRange = (joystickSaturation >= 0.01) ? joystickSaturation : 0.01;
       joystickSaturation = 1;
     }
+
     double exponentialScalar = Math.pow((joystickRange - deadband) / (1 - deadband), strafeScaling)
         / joystickRange;
+
+    // Normalize raw X and Y if saturation is >1 and increase joystick outputs
+    // exponentially based on strafeScaling and clamp values below strafeMax
     return new double[] { rawX / joystickSaturation * exponentialScalar * strafeMax,
         rawY / joystickSaturation * exponentialScalar * strafeMax };
   }
 
   public static double swerveScaleRotate(XboxController driverController, boolean isAutonomous) {
-    String profile = Robot.legalDrivers[(int)Dashboard.selectedDriver.get(0.0)];
+    String profile = Robot.legalDrivers[(int) Dashboard.selectedDriver.get(0.0)];
     DriverProfile currentProfile = SwerveUtils.readDriverProfiles(profile);
     double deadband = (isAutonomous) ? 0.01 : currentProfile.rotateDeadband;
     double rawY = -driverController.getRightX();
@@ -138,17 +160,16 @@ public class SwerveUtils {
     return Math.signum(rawY) * exponentialScalar * ((isAutonomous) ? 1 : currentProfile.rotateMax);
   }
 
-
   /**
    * This funciton is not complete and needs mto be made
    * but i cant be bothered to do it rn
    */
-  public static double[] assistStrafe(double[] joysticks, double[] lockedXY, PIDController strafePID){
+  public static double[] assistStrafe(double[] joysticks, double[] lockedXY, PIDController strafePID) {
     return joysticks;
   }
 
   public static double[] fieldOrientedTransform(double[] joysticks, double heading) {
-    double[] output = new double[]{0.0, 0.0};
+    double[] output = new double[] { 0.0, 0.0 };
     double x = joysticks[0];
     double y = joysticks[1];
     double headingR = Math.toRadians(heading);
