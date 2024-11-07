@@ -74,18 +74,20 @@ public class Robot extends TimedRobot {
 
   /** This function is called once when teleop is enabled. */
   @Override
-  public void teleopInit() {}
-
+  public void teleopInit() {
+    System.out.println("Teleop enabled!");
+  }
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    System.out.println("Hello world!\n");
+    System.out.println("Teleop is still enabled\n");
   }
 
   /** This function is called once when the robot is disabled. */
   @Override
-  public void disabledInit() {}
-
+  public void disabledInit() {
+    System.out.println("Disabled!");
+  }
   /** This function is called periodically when disabled. */
   @Override
   public void disabledPeriodic() {}

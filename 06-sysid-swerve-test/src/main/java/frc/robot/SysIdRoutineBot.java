@@ -20,11 +20,11 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
-public class SysId extends SubsystemBase {
+public class SysIdRoutineBot extends SubsystemBase {
   // The motors on the left side of the drive.
-    // Define constant for Canbus name on Holicanoli
-    private static final String CANBUS_NAME = "rio";
-    // Define the kraken motor on Holicanoli
+    // Define constant for Canbus name on Beta
+    private static final String CANBUS_NAME = "canivore";
+    // Define the kraken motor on Beta
     private final TalonFX m_leftMotor1 = new TalonFX(11, CANBUS_NAME);
     private final TalonFX m_leftMotor2 = new TalonFX(12, CANBUS_NAME);
     private final TalonFX m_rightMotor1 = new TalonFX(10, CANBUS_NAME);
@@ -52,7 +52,7 @@ public class SysId extends SubsystemBase {
               log -> {
                 // Record a frame for the left motors.  Since these share an encoder, we consider
                 // the entire group to be one motor.
-                log.motor("drive")
+                log.motor("Drive Left 1")
                     .voltage(
                         m_appliedVoltage.mut_replace(
                             m_leftMotor1.get() * RobotController.getBatteryVoltage(), Volts))
@@ -72,7 +72,7 @@ public class SysId extends SubsystemBase {
                 m_leftMotor2.setVoltage(volts.in(Volts));
               },
               log -> {
-                log.motor("drive")
+                log.motor("Drive Left 2")
                     .voltage(
                         m_appliedVoltage.mut_replace(
                             m_leftMotor2.get() * RobotController.getBatteryVoltage(), Volts))
@@ -89,7 +89,7 @@ public class SysId extends SubsystemBase {
                 m_rightMotor1.setVoltage(volts.in(Volts));
               },
               log -> {
-                log.motor("drive")
+                log.motor("Drive Right 1")
                     .voltage(
                         m_appliedVoltage.mut_replace(
                             m_rightMotor1.get() * RobotController.getBatteryVoltage(), Volts))
@@ -106,7 +106,7 @@ public class SysId extends SubsystemBase {
                 m_rightMotor2.setVoltage(volts.in(Volts));
               },
               log -> {
-                log.motor("drive")
+                log.motor("Drive Right 2")
                     .voltage(
                         m_appliedVoltage.mut_replace(
                             m_rightMotor2.get() * RobotController.getBatteryVoltage(), Volts))
@@ -128,7 +128,7 @@ public class SysId extends SubsystemBase {
    *
    * @param direction The direction (forward or reverse) to run the test in
    */
-  public void sysIdQuasistatic(SysIdRoutine.Direction direction) {
+  public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
     m_sysIdRoutineLeft1.quasistatic(direction);
     m_sysIdRoutineLeft2.quasistatic(direction);
     m_sysIdRoutineRight1.quasistatic(direction);

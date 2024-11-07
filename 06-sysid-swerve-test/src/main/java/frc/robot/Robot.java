@@ -4,17 +4,19 @@
 
 package frc.robot;
 
-import frc.robot.SysId;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 public class Robot extends TimedRobot {
-  private final XboxController m_controller = new XboxController(0);
+  private final CommandXboxController m_controller = new CommandXboxController(0);
   private final Drivetrain m_swerve = new Drivetrain();
-  private final SysId m_sysid = new SysId();
+  private final SysIdRoutineBot m_sysid = new SysIdRoutineBot();
 
   // Slew rate limiters to make joystick inputs more gentle; 1/3 sec from 0 to 1.
   private final SlewRateLimiter m_xspeedLimiter = new SlewRateLimiter(6);
@@ -32,23 +34,27 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    if (m_controller.getRightBumper() == true) {
-      if (m_controller.getBButton()) {
-        m_sysid.sysIdQuasistatic(SysIdRoutine.Direction.kForward);
-      }
-      if (m_controller.getAButton()) {
-        m_sysid.sysIdQuasistatic(SysIdRoutine.Direction.kReverse);
-      }
-      if (m_controller.getYButton()) {
-        m_sysid.sysIdDynamic(SysIdRoutine.Direction.kForward);
-      }
-      if (m_controller.getXButton()) {
-        m_sysid.sysIdDynamic(SysIdRoutine.Direction.kReverse);
-      }
-    } else {
-      checkForBabyToggle();
-      driveWithJoystick(true);
-    }
+    m_controller
+      .b()
+      .and(m_controller.rightBumper())
+      .whileTrue(m_sysid.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+    // if (m_controller.getRightBumper() == true) {
+    //   if (m_controller.getBButton()) {
+    //     m_sysid.sysIdQuasistatic(SysIdRoutine.Direction.kForward);
+    //   }
+    //   if (m_controller.getAButton()) {
+    //     m_sysid.sysIdQuasistatic(SysIdRoutine.Direction.kReverse);
+    //   }
+    //   if (m_controller.getYButton()) {
+    //     m_sysid.sysIdDynamic(SysIdRoutine.Direction.kForward);
+    //   }
+    //   if (m_controller.getXButton()) {
+    //     m_sysid.sysIdDynamic(SysIdRoutine.Direction.kReverse);
+    //   }
+    // } else {
+    //   checkForBabyToggle();
+    //   driveWithJoystick(true);
+    // }
   }
 
   @Override

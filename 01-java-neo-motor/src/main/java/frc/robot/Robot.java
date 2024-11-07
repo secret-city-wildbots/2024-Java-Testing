@@ -22,7 +22,7 @@ import com.revrobotics.CANSparkLowLevel.MotorType;
  */
 public class Robot extends TimedRobot {
   private Joystick m_stick;
-  private static final int deviceID = 2;
+  private static final int deviceID = 21;
   private CANSparkMax m_motor;
   private SparkPIDController m_pidController;
   private RelativeEncoder m_encoder;
@@ -61,7 +61,7 @@ public class Robot extends TimedRobot {
     kFF = 0.000015; 
     kMaxOutput = 1; 
     kMinOutput = -1;
-    maxRPM = 5700;
+    maxRPM = 7000;
 
     // set PID coefficients
     m_pidController.setP(kP);
