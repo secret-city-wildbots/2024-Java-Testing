@@ -38,16 +38,16 @@ public class Drivetrain {
   private NetworkTable table = inst.getTable("datatable");
   private StructPublisher<Pose3d> myPose = table.getStructTopic("myPose", Pose3d.struct).publish();
   
-  public static final double kMaxSpeed = 6.0; // meters per second
+  public static final double kMaxSpeed = 5.21208; // meters per second
   public static final double kMaxAngularSpeed = 2 * Math.PI; // 1/2 rotations per second
 
-  private final Translation2d m_module0Location = new Translation2d(0.254, -0.311);
-  private final Translation2d m_module1Location = new Translation2d(0.254, 0.311);
-  private final Translation2d m_module2Location = new Translation2d(-0.254, 0.311);
-  private final Translation2d m_module3Location = new Translation2d(-0.254, -0.311);
+  private final Translation2d m_module0Location = new Translation2d(0.4445, -0.4445);
+  private final Translation2d m_module1Location = new Translation2d(0.4445, 0.4445);
+  private final Translation2d m_module2Location = new Translation2d(-0.4445, 0.4445);
+  private final Translation2d m_module3Location = new Translation2d(-0.4445, -0.4445);
 
-  public static final double driveGearRatio = 7;
-  public static final double azimuthGearRatio = 16;
+  public static final double driveGearRatio = 6.12;
+  public static final double azimuthGearRatio = 21.4285;
   //Jasper is a bit special
   // Get Swerve Module Drive Motor Confugrations
   TalonFXConfiguration[] configs = swerveModuleConfigs();
@@ -59,7 +59,7 @@ public class Drivetrain {
   private final SwerveModule m_module2 = new SwerveModule(12, 22, driveGearRatio, azimuthGearRatio, configs[2]);
   private final SwerveModule m_module3 = new SwerveModule(13, 23, driveGearRatio, azimuthGearRatio, configs[3]);
 
-  private final Pigeon2 m_pigeon = new Pigeon2(6, "canivore");
+  private final Pigeon2 m_pigeon = new Pigeon2(6);
 
   private final SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(m_module0Location, m_module1Location, m_module2Location, m_module3Location);
 

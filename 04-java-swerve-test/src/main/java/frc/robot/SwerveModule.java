@@ -43,7 +43,7 @@ public class SwerveModule {
   // private DoublePublisher azimuthCurrentStateAngle1 = table.getDoubleTopic("azimuthCurrentStateAngle").publish();
 
   // Constants for Swerve Module Characteristics
-  private static final double kWheelRadius = 0.0636; // Wheel radius in Meters (2.5 inches)
+  private static final double kWheelRadius = 0.0508; // Wheel radius in Meters (2 inches)
   private static final double kModuleMaxAngularVelocity = Drivetrain.kMaxAngularSpeed;
   private static final double kModuleMaxAngularAcceleration = 2 * Math.PI; // radians per second squared
   private final double m_driveRatio;
@@ -89,10 +89,10 @@ public class SwerveModule {
       TalonFXConfiguration driveMotorConfigs) {
     // Initialize Motors
     // NOTE: These are just setup for Holicanoli. Uncomment lines 82 and 83 when testing with the real robot
-    // m_driveMotor = new TalonFX(driveMotorID, "canivore");
+    // m_driveMotor = new TalonFX(driveMotorID);
     // m_azimuthMotor = new TalonFX(azimuthMotorID, "rio");
-    m_driveMotor = new TalonFX(driveMotorID, "canivore");
-    m_azimuthMotor = new TalonFX(azimuthMotorID, "canivore");
+    m_driveMotor = new TalonFX(driveMotorID);
+    m_azimuthMotor = new TalonFX(azimuthMotorID);
 
     // Set drive motor configs
     m_driveMotor.getConfigurator().apply(driveMotorConfigs);
